@@ -1,0 +1,17 @@
+{
+  "name": "joshinan-docs",
+  "version": "1.0.0",
+  "description": "常南国際学院 ドキュメントサイト",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}
