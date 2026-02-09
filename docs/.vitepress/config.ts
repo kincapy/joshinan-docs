@@ -110,6 +110,7 @@ export default defineConfig({
               items: [
                 { text: '概要', link: '/01-domain-knowledge/11-immigration-report/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/11-immigration-report/01-work-flow' },
+                { text: 'データ', link: '/01-domain-knowledge/11-immigration-report/02-data' },
               ],
             },
             {
