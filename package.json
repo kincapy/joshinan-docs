@@ -13,5 +13,8 @@
   "type": "module",
   "devDependencies": {
     "vitepress": "^1.6.4"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.4.2"
   }
 }
