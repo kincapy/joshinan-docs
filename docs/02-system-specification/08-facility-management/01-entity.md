@@ -34,15 +34,16 @@ title: エンティティ定義
 
 ## DormitoryAssignment / 入寮履歴
 
-学生と寮の紐付け。入退寮の履歴管理。
+学生と寮の紐付け。入退寮の履歴管理。ステータスにより入居中の学生を即座に集計可能（寮費請求の対象判定に使用）。
 
 | プロパティ | 英語名 | 型 | デフォルト | nullable | unique | 制約・バリデーション |
 |-----------|--------|-----|-----------|----------|--------|---------------------|
 | ID | id | UUID | auto | - | o | PK |
 | 学生ID | studentId | UUID | - | - | - | FK → Student |
 | 寮ID | dormitoryId | UUID | - | - | - | FK → Dormitory |
+| ステータス | status | Enum(AssignmentStatus) | ACTIVE | - | - | |
 | 入寮日 | moveInDate | Date | - | - | - | |
-| 退寮日 | moveOutDate | Date | - | o | - | null = 現在入居中 |
+| 退寮日 | moveOutDate | Date | - | o | - | null = 未退寮 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 
 ### リレーション
@@ -52,8 +53,10 @@ title: エンティティ定義
 
 ### ビジネスルール
 
-- moveOutDate が null の場合、現在入居中を意味する
-- 学生が引っ越す場合: 旧レコードに moveOutDate を設定し、新レコードを作成
+- 入寮: status = ACTIVE, moveOutDate = null で作成
+- 退寮: status を ENDED に変更し、moveOutDate を設定
+- 寮の移動（A→B）: 旧レコードを ENDED + moveOutDate 設定、新レコードを ACTIVE で作成
+- 寮費請求の対象判定: `status = ACTIVE` の学生が寮費請求対象
 
 ---
 
@@ -79,6 +82,17 @@ title: エンティティ定義
 ### 複合ユニーク制約
 
 - (dormitoryId, month) のペアで一意
+
+---
+
+## Enum 定義
+
+### AssignmentStatus / 入寮ステータス
+
+| 値 | 表示名 | 備考 |
+|----|--------|------|
+| ACTIVE | 入居中 | 寮費請求対象 |
+| ENDED | 退寮済み | 履歴として保持 |
 
 ---
 
