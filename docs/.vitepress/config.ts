@@ -115,6 +115,10 @@ export default defineConfig({
                 { text: '概要', link: '/01-domain-knowledge/11-immigration-report/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/11-immigration-report/01-work-flow' },
                 { text: 'データ', link: '/01-domain-knowledge/11-immigration-report/02-data' },
+                { text: '帳票 — 定期報告', link: '/01-domain-knowledge/11-immigration-report/03-forms-periodic' },
+                { text: '帳票 — ビザ申請', link: '/01-domain-knowledge/11-immigration-report/04-forms-visa' },
+                { text: '帳票 — 届出', link: '/01-domain-knowledge/11-immigration-report/05-forms-notification' },
+                { text: '帳票 — 証明書', link: '/01-domain-knowledge/11-immigration-report/06-forms-certificate' },
               ],
             },
             {
