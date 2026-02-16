@@ -317,6 +317,13 @@ export default defineConfig({
             { text: 'データメンテナンス', link: '/03-tasks/data-maintenance/' },
             { text: '入管報告・届出', link: '/03-tasks/immigration/' },
             { text: 'ビザ・特定技能', link: '/03-tasks/visa/' },
+            {
+              text: '2026/02/17',
+              collapsed: false,
+              items: [
+                { text: '仕様ドキュメントレビュー・整備', link: '/03-tasks/2026/02/17/1000-仕様ドキュメントレビュー整備' },
+              ],
+            },
           ],
         },
       ],
