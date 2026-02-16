@@ -141,6 +141,9 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/14-recruitment/' },
+                { text: '申請書作成の注意事項', link: '/01-domain-knowledge/14-recruitment/01-application-form' },
+                { text: '提出書類一覧と注意事項', link: '/01-domain-knowledge/14-recruitment/02-required-documents' },
+                { text: '各提出書類の詳細注意事項', link: '/01-domain-knowledge/14-recruitment/03-document-details' },
               ],
             },
           ],
