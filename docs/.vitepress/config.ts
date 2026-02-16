@@ -100,9 +100,12 @@ export default defineConfig({
             },
             {
               text: '10 外部システム連携',
-              collapsed: true,
+              collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/10-external-integration/' },
+                { text: 'RINGUAL — 概要', link: '/01-domain-knowledge/10-external-integration/01-ringual' },
+                { text: 'RINGUAL — データ構造', link: '/01-domain-knowledge/10-external-integration/02-ringual-data' },
+                { text: 'RINGUAL — 出欠・成績・時間割', link: '/01-domain-knowledge/10-external-integration/03-ringual-operations' },
               ],
             },
             {
