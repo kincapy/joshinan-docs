@@ -35,7 +35,7 @@ graph LR
 #### 表示内容
 
 - 参照エンティティ: Student
-  - 表示プロパティ: studentNumber, nameKanji, nameEn, nationality, status, cohort, className
+  - 表示プロパティ: studentNumber, nameKanji, nameEn, nationality, status, cohort, 現在のクラス名（ClassEnrollment経由）
 - フィルタ:
   - ステータス（StudentStatus）
   - コホート（Cohort）
@@ -64,7 +64,7 @@ graph LR
 | タブ | 表示内容 |
 |------|---------|
 | 基本情報 | 氏名、生年月日、性別、国籍、連絡先、住所 |
-| 学籍情報 | 学籍番号、ステータス、コホート、クラス、入学日、卒業予定日 |
+| 学籍情報 | 学籍番号、ステータス、コホート、現在のクラス（ClassEnrollment経由）、入学日、卒業予定日 |
 | 在留情報 | パスポート、在留カード、在留資格、在留期限、資格外活動許可 |
 | 入国情報 | 入国日、入国空港、便名、出迎え担当 |
 | 勤務先 | 勤務先一覧（最大3件）、週合計勤務時間 |
@@ -83,7 +83,6 @@ graph LR
 
 | 現在のステータス | 変更可能なステータス |
 |----------------|-------------------|
-| 未登録 | 入学前 |
 | 入学前 | 在学 |
 | 在学 | 休学、退学、除籍、卒業、修了 |
 | 休学 | 在学、退学、除籍 |
@@ -112,7 +111,7 @@ graph LR
 
 - 学籍番号は入学年＋コホート＋連番から自動採番
 - 送信後の遷移: 学生詳細画面
-- 初期ステータス: PRE_ENROLLMENT
+- 初期ステータス: PRE_ENROLLMENT（入学前詳細: APPLICATION_PLANNED）
 
 ---
 

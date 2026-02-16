@@ -19,11 +19,10 @@ title: エンティティ定義
 | 性別 | gender | Enum(Gender) | - | - | - | |
 | 国籍 | nationality | String | - | - | - | |
 | ステータス | status | Enum(StudentStatus) | PRE_ENROLLMENT | - | - | 下記 Enum 参照 |
-| 入学前詳細ステータス | preEnrollmentStatus | Enum(PreEnrollmentStatus) | - | o | - | ステータスが PRE_ENROLLMENT の場合のみ |
+| 入学前詳細ステータス | preEnrollmentStatus | Enum(PreEnrollmentStatus) | APPLICATION_PLANNED | o | - | ステータスが PRE_ENROLLMENT の場合のみ |
 | 入学年月日 | enrollmentDate | Date | - | o | - | |
 | 卒業予定日 | expectedGraduationDate | Date | - | o | - | コホートから自動算出 |
 | コホート | cohort | Enum(Cohort) | - | - | - | 4月/7月/10月/1月 |
-| クラス | classId | UUID | - | o | - | FK → Class |
 | 電話番号 | phone | String | - | o | - | |
 | メールアドレス | email | String | - | o | - | |
 | 日本の住所 | addressJapan | String | - | o | - | |
@@ -56,7 +55,7 @@ title: エンティティ定義
 ### リレーション
 
 - Student → Agent: どのエージェント経由の学生か (N:1)
-- Student → Class: 所属クラス (N:1)
+- Student → ClassEnrollment: クラス在籍履歴 (1:N)。現在のクラスは最新の ClassEnrollment から取得
 - Student → Staff: 出迎え担当 (N:1)
 - Student → StudentEmployment: 勤務先情報 (1:N、最大3件)
 - Student → InterviewRecord: 面談記録 (1:N)
@@ -132,8 +131,7 @@ title: エンティティ定義
 
 | 値 | 表示名 | 備考 |
 |----|--------|------|
-| UNREGISTERED | 未登録 | 初期状態 |
-| PRE_ENROLLMENT | 入学前 | COE申請中など。詳細は PreEnrollmentStatus |
+| PRE_ENROLLMENT | 入学前 | 入管申請〜入国まで。詳細は PreEnrollmentStatus |
 | ENROLLED | 在学 | 通常の在籍状態 |
 | ON_LEAVE | 休学 | |
 | WITHDRAWN | 退学 | |
@@ -143,11 +141,12 @@ title: エンティティ定義
 
 ### PreEnrollmentStatus / 入学前詳細ステータス
 
-| 値 | 表示名 |
-|----|--------|
-| APPLYING | 申請中 |
-| AWAITING_ENTRY | 入国待ち |
-| NOT_GRANTED | 不交付 |
+| 値 | 表示名 | 備考 |
+|----|--------|------|
+| APPLICATION_PLANNED | 申請予定 | 学生情報を登録した初期状態 |
+| GRANTED | 入学予定 | COE交付済み、入国を待っている状態 |
+| NOT_GRANTED | 不交付 | COE不交付。入学には至らない |
+| DECLINED | 入学辞退 | COE交付後に本人都合で辞退 |
 
 ### Cohort / 入学コホート
 
