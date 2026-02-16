@@ -85,6 +85,7 @@ title: 募集業務
 - [申請書作成の注意事項](/01-domain-knowledge/14-recruitment/01-application-form) — 申請書（別記第6号の3様式）の記載ルール
 - [提出書類一覧と注意事項](/01-domain-knowledge/14-recruitment/02-required-documents) — 書類全般のルールと各書類の詳細
 - [各提出書類の詳細注意事項](/01-domain-knowledge/14-recruitment/03-document-details) — 経費支弁・資金形成経緯・理由書等
+- [募集業務の課題と解決策](/01-domain-knowledge/14-recruitment/04-issues) — 書類品質の課題・AI活用の解決策アイデア
 
 ## 交付率について
 
