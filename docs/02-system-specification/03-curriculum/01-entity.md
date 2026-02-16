@@ -4,32 +4,9 @@ title: エンティティ定義
 
 # カリキュラム・時間割 エンティティ定義
 
-## Course / コース
-
-日本語学校が提供する教育コース。入管届出やカリキュラム設計の基礎単位。
-
-| プロパティ | 英語名 | 型 | デフォルト | nullable | unique | 制約・バリデーション |
-|-----------|--------|-----|-----------|----------|--------|---------------------|
-| ID | id | UUID | auto | - | o | PK |
-| コース名 | name | String | - | - | o | |
-| 対象JLPTレベル | targetLevel | Enum(JlptLevel) | - | - | - | |
-| コース期間（月数） | durationMonths | Int | - | - | - | |
-| 年間授業時間 | annualHours | Int | - | - | - | min 760（法定基準） |
-| 説明 | description | String | - | o | - | |
-| 有効フラグ | isActive | Boolean | true | - | - | |
-| 作成日時 | createdAt | DateTime | auto | - | - | |
-| 更新日時 | updatedAt | DateTime | auto | - | - | |
-
-### リレーション
-
-- Course → TimetableSlot: コースに紐づく時間割（間接的にClassを経由）
-
-### ビジネスルール
-
-- 年間授業時間（annualHours）は 760時間以上であること（告示基準）
-- 実際の運用では 800時間が一般的
-
----
+::: info コース（在籍期間区分）について
+入管届出上の「コース」は Student.cohort（4月生=2年、7月生=1年9ヶ月、10月生=1.5年、1月生=1年3ヶ月）で管理する。独立した Course エンティティは設けない。入管の定期報告で必要な「コース別出席率」は、Student.cohort で集計する。年間授業時間は法定基準760時間以上（実運用は800時間が一般的）。
+:::
 
 ## Subject / 科目
 

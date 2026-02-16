@@ -54,7 +54,7 @@ title: エンティティ定義
 
 ### unique 制約
 
-- `[studentId, classId, enrollmentType]` — 同一学生が同一クラスに同じ在籍タイプで重複在籍しない
+- `[studentId, classId, enrollmentType, startDate]` — 同一学生が同一クラスに同じ在籍タイプ・同一開始日で重複在籍しない（A→B→A のように戻るケースを許容）
 
 ### リレーション
 
