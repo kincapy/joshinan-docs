@@ -31,6 +31,7 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '概要・ビジネスモデル', link: '/01-domain-knowledge/01-school-info/' },
+                { text: 'データ', link: '/01-domain-knowledge/01-school-info/02-data' },
               ],
             },
             {
@@ -49,6 +50,7 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/03-curriculum/' },
+                { text: 'データ', link: '/01-domain-knowledge/03-curriculum/02-data' },
               ],
             },
             {
@@ -56,6 +58,7 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/04-class-assignment/' },
+                { text: 'データ', link: '/01-domain-knowledge/04-class-assignment/02-data' },
               ],
             },
             {
@@ -96,6 +99,7 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/09-staff-management/' },
+                { text: 'データ', link: '/01-domain-knowledge/09-staff-management/02-data' },
               ],
             },
             {
@@ -142,8 +146,17 @@ export default defineConfig({
               items: [
                 { text: '概要', link: '/01-domain-knowledge/14-recruitment/' },
                 { text: '申請書作成の注意事項', link: '/01-domain-knowledge/14-recruitment/01-application-form' },
+                { text: 'データ', link: '/01-domain-knowledge/14-recruitment/02-data' },
                 { text: '提出書類一覧と注意事項', link: '/01-domain-knowledge/14-recruitment/02-required-documents' },
                 { text: '各提出書類の詳細注意事項', link: '/01-domain-knowledge/14-recruitment/03-document-details' },
+              ],
+            },
+            {
+              text: '15 特定技能・職業紹介',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/01-domain-knowledge/15-specified-skilled-worker/' },
+                { text: 'データ', link: '/01-domain-knowledge/15-specified-skilled-worker/02-data' },
               ],
             },
           ],
@@ -176,12 +189,48 @@ export default defineConfig({
               ],
             },
             {
+              text: '01 学校基本情報',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/01-school-info/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/01-school-info/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/01-school-info/02-uiux' },
+              ],
+            },
+            {
               text: '02 学生管理',
               collapsed: false,
               items: [
                 { text: '概要', link: '/02-system-specification/02-student-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/02-student-management/01-entity' },
                 { text: 'UIUX定義', link: '/02-system-specification/02-student-management/02-uiux' },
+              ],
+            },
+            {
+              text: '03 カリキュラム・時間割',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/03-curriculum/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/03-curriculum/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/03-curriculum/02-uiux' },
+              ],
+            },
+            {
+              text: '04 クラス編成',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/04-class-assignment/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/04-class-assignment/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/04-class-assignment/02-uiux' },
+              ],
+            },
+            {
+              text: '05 出席管理',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/05-attendance/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/05-attendance/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/05-attendance/02-uiux' },
               ],
             },
             {
@@ -203,21 +252,21 @@ export default defineConfig({
               ],
             },
             {
-              text: '05 出席管理',
-              collapsed: false,
-              items: [
-                { text: '概要', link: '/02-system-specification/05-attendance/' },
-                { text: 'エンティティ定義', link: '/02-system-specification/05-attendance/01-entity' },
-                { text: 'UIUX定義', link: '/02-system-specification/05-attendance/02-uiux' },
-              ],
-            },
-            {
               text: '08 施設・備品管理',
               collapsed: false,
               items: [
                 { text: '概要', link: '/02-system-specification/08-facility-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/08-facility-management/01-entity' },
                 { text: 'UIUX定義', link: '/02-system-specification/08-facility-management/02-uiux' },
+              ],
+            },
+            {
+              text: '09 教職員管理',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/09-staff-management/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/09-staff-management/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/09-staff-management/02-uiux' },
               ],
             },
             {
@@ -236,6 +285,24 @@ export default defineConfig({
                 { text: '概要', link: '/02-system-specification/12-internal-documents/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/12-internal-documents/01-entity' },
                 { text: 'UIUX定義', link: '/02-system-specification/12-internal-documents/02-uiux' },
+              ],
+            },
+            {
+              text: '14 募集業務',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/14-recruitment/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/14-recruitment/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/14-recruitment/02-uiux' },
+              ],
+            },
+            {
+              text: '15 特定技能・職業紹介',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/15-specified-skilled-worker/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/15-specified-skilled-worker/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/15-specified-skilled-worker/02-uiux' },
               ],
             },
           ],
