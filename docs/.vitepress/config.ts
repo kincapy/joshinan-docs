@@ -322,6 +322,7 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '仕様ドキュメントレビュー・整備', link: '/03-tasks/2026/02/17/1000-仕様ドキュメントレビュー整備' },
+                { text: 'プロジェクト初期構築', link: '/03-tasks/2026/02/17/1100-プロジェクト初期構築' },
               ],
             },
           ],
