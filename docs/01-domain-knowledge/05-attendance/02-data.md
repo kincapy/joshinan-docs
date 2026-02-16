@@ -77,7 +77,23 @@ flowchart TD
 出席率70%未満の学生は在留期間の更新が原則不許可になります。出席率の低下が見られた時点で早期に指導を開始することが重要です。
 :::
 
+## RINGUALでの出席データ管理
+
+出席データはRINGUALで一元管理されます。出席率はRINGUALが自動計算し、上記の基準値との照合に使用します。
+
+| 項目 | 内容 |
+|------|------|
+| 入力単位 | クラス × 時限 |
+| 入力方法 | 個別選択 or 1日一括入力 |
+| エクスポート | 週単位（1〜5週分）でExcel出力可能 |
+| フィルター | クラス（A1〜A4, P1〜P3）、性別 |
+
+::: tip 出欠ステータスの詳細
+6種類の出欠ステータス（出席・欠席・遅刻・早退・公欠・出停）の内部コードと出席率への影響は [出席管理 概要](/01-domain-knowledge/05-attendance/) を参照。
+:::
+
 ## 関連カテゴリ
 
 - [11 入管報告・届出](/01-domain-knowledge/11-immigration-report/) — 出席率報告の手続き詳細
 - [02 学生管理](/01-domain-knowledge/02-student-management/) — 学生の在籍管理
+- [RINGUAL — 出欠・成績・時間割](/01-domain-knowledge/10-external-integration/03-ringual-operations#出欠入力student-attendancephp) — RINGUALでの出欠入力画面の詳細
