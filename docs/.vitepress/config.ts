@@ -148,6 +148,13 @@ export default defineConfig({
           items: [
             { text: '概要', link: '/02-system-specification/' },
             {
+              text: '00 コンセプト',
+              collapsed: false,
+              items: [
+                { text: 'システムコンセプト', link: '/02-system-specification/00-concept/' },
+              ],
+            },
+            {
               text: '00 共通',
               collapsed: false,
               items: [
