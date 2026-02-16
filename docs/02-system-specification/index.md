@@ -32,3 +32,5 @@ title: システム仕様
 | `02-data.md`（項目・値の例） | → | `01-entity.md`（型・制約・FK） | 「学籍番号」→ `studentNumber: String, unique, 7桁` |
 | `01-work-flow.md`（業務ステップ） | → | `02-uiux.md`（画面遷移） | 「月次請求の作成」→ `請求作成 Step 1: 対象月選択` |
 | `03-issues.md`（課題のポイント） | → | `02-uiux.md`（アルゴリズム） | 「残高計算の複雑さ」→ `残高自動計算アルゴリズム` |
+
+作成・更新の手順は `/docs-system-specification` スキルを参照してください。
