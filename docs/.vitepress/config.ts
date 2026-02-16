@@ -28,9 +28,9 @@ export default defineConfig({
             },
             {
               text: '01 学校基本情報',
-              collapsed: true,
+              collapsed: false,
               items: [
-                { text: '概要', link: '/01-domain-knowledge/01-school-info/' },
+                { text: '概要・ビジネスモデル', link: '/01-domain-knowledge/01-school-info/' },
               ],
             },
             {
@@ -41,6 +41,7 @@ export default defineConfig({
                 { text: '業務フロー', link: '/01-domain-knowledge/02-student-management/01-work-flow' },
                 { text: 'データ', link: '/01-domain-knowledge/02-student-management/02-data' },
                 { text: '課題', link: '/01-domain-knowledge/02-student-management/03-issues' },
+                { text: '留学生の実態', link: '/01-domain-knowledge/02-student-management/04-student-reality' },
               ],
             },
             {
@@ -92,7 +93,7 @@ export default defineConfig({
             },
             {
               text: '09 教職員管理',
-              collapsed: true,
+              collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/09-staff-management/' },
               ],
@@ -126,6 +127,13 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/13-regulatory-history/' },
+              ],
+            },
+            {
+              text: '14 募集業務',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/01-domain-knowledge/14-recruitment/' },
               ],
             },
           ],
