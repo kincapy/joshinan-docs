@@ -177,23 +177,65 @@ export default defineConfig({
             },
             {
               text: '02 学生管理',
-              collapsed: true,
+              collapsed: false,
               items: [
                 { text: '概要', link: '/02-system-specification/02-student-management/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/02-student-management/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/02-student-management/02-uiux' },
               ],
             },
             {
               text: '06 学費管理',
-              collapsed: true,
+              collapsed: false,
               items: [
                 { text: '概要', link: '/02-system-specification/06-tuition/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/06-tuition/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/06-tuition/02-uiux' },
               ],
             },
             {
               text: '07 エージェント管理',
-              collapsed: true,
+              collapsed: false,
               items: [
                 { text: '概要', link: '/02-system-specification/07-agent-management/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/07-agent-management/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/07-agent-management/02-uiux' },
+              ],
+            },
+            {
+              text: '05 出席管理',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/05-attendance/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/05-attendance/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/05-attendance/02-uiux' },
+              ],
+            },
+            {
+              text: '08 施設・備品管理',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/08-facility-management/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/08-facility-management/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/08-facility-management/02-uiux' },
+              ],
+            },
+            {
+              text: '11 入管報告・届出',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/11-immigration-report/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/11-immigration-report/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/11-immigration-report/02-uiux' },
+              ],
+            },
+            {
+              text: '12 社内文書',
+              collapsed: true,
+              items: [
+                { text: '概要', link: '/02-system-specification/12-internal-documents/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/12-internal-documents/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/12-internal-documents/02-uiux' },
               ],
             },
           ],
