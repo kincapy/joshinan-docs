@@ -26,6 +26,19 @@ npm run build    # ビルド
 npm run preview  # プレビュー
 ```
 
+## Session Start (MANDATORY)
+
+セッション開始時、コード変更に着手する前に **必ず** 以下を実行すること:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+- main ブランチの最新を取り込んでからコンフリクトのない状態で作業を始める
+- worktree 環境でも同様。`git pull` ではなく `git fetch + merge` を使う
+- コンフリクトが発生した場合は、先に解決してから作業を開始する
+
 ## Development Workflow
 
 ### Task Scale Decision Matrix (MANDATORY)
