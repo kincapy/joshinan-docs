@@ -1,7 +1,24 @@
+# Dependencies
 node_modules/
+
+# VitePress
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+
+# Environment
 .env
 .env.local
+.env*.local
+
+# Vercel
 .vercel
+
+# OS
+.DS_Store
+
+# Scripts
 scripts/output/

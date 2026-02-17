@@ -1,0 +1,123 @@
+/// =============================================
+/// 入管報告・届出 (11-immigration-report)
+/// =============================================
+
+/// 入管タスク種別
+enum ImmigrationTaskType {
+  WITHDRAWAL_REPORT       /// 退学者報告
+  LOW_ATTENDANCE_REPORT   /// 出席率5割未満報告
+  ENROLLMENT_NOTIFICATION /// 受入れ開始届出
+  DEPARTURE_NOTIFICATION  /// 受入れ終了届出
+  MISSING_PERSON_REPORT   /// 所在不明者報告
+  CHANGE_NOTIFICATION     /// 変更届出
+  COE_APPLICATION         /// COE交付申請
+  VISA_RENEWAL            /// 在留期間更新
+}
+
+/// タスク発生トリガー
+enum TaskTrigger {
+  EVENT    /// イベントベース
+  SCHEDULE /// スケジュールベース
+}
+
+/// タスクステータス
+enum TaskStatus {
+  TODO        /// 未着手
+  IN_PROGRESS /// 進行中
+  DONE        /// 完了
+  OVERDUE     /// 期限超過
+}
+
+/// 入管書類収集状態
+enum ImmigrationCollectionStatus {
+  NOT_COLLECTED  /// 未回収
+  COLLECTED      /// 回収済み
+  AUTO_GENERATED /// システム自動生成
+}
+
+/// 定期報告種別
+enum ScheduledReportType {
+  ENROLLMENT_COUNT_MAY  /// 在籍者数届出（5月）
+  ENROLLMENT_COUNT_NOV  /// 在籍者数届出（11月）
+  ATTENDANCE_FIRST_HALF /// 出席率報告（前期）
+  ATTENDANCE_SECOND_HALF /// 出席率報告（後期）
+  PERIODIC_INSPECTION   /// 定期点検報告書
+  COURSE_COMPLETION     /// 課程修了者報告
+  OPERATION_STATUS      /// 運営状況報告（文科省）
+  BUSINESS_PLAN         /// 事業計画書
+}
+
+/// 入管タスク
+model ImmigrationTask {
+  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// タスク種別
+  taskType         ImmigrationTaskType
+  /// 発生トリガー（イベント/スケジュール）
+  trigger          TaskTrigger
+  /// 対象学生ID（学生単位のタスクの場合）
+  studentId        String?               @db.Uuid
+  /// 期限
+  deadline         DateTime              @db.Date
+  /// ステータス
+  status           TaskStatus            @default(TODO)
+  /// 根拠法令（告示基準第XX号 等）
+  legalBasis       String?
+  /// 届出方法（電子届出/窓口/郵送）
+  submissionMethod String?
+  /// 完了日
+  completedAt      DateTime?             @db.Date
+  /// 備考
+  notes            String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  /// 対象学生（任意）
+  student   Student?              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// 関連書類 (1:N)
+  documents ImmigrationDocument[]
+
+  @@index([studentId])
+  @@map("immigration_tasks")
+}
+
+/// 入管書類
+model ImmigrationDocument {
+  id               String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// タスクID
+  taskId           String                      @db.Uuid
+  /// 書類名
+  documentName     String
+  /// 収集状態
+  collectionStatus ImmigrationCollectionStatus  @default(NOT_COLLECTED)
+  /// 備考
+  notes            String?
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  /// 所属タスク
+  task ImmigrationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("immigration_documents")
+}
+
+/// 定期報告スケジュール
+model ScheduledReport {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 報告種別
+  reportType  ScheduledReportType
+  /// 対象年度
+  fiscalYear  Int
+  /// 期限
+  deadline    DateTime            @db.Date
+  /// ステータス
+  status      TaskStatus          @default(TODO)
+  /// 完了日
+  completedAt DateTime?           @db.Date
+  /// 備考
+  notes       String?
+  createdAt   DateTime            @default(now())
+
+  @@unique([reportType, fiscalYear])
+  @@map("scheduled_reports")
+}

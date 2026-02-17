@@ -1,0 +1,118 @@
+/// =============================================
+/// 学費管理 (06-tuition)
+/// =============================================
+
+/// 請求ステータス
+enum InvoiceStatus {
+  ISSUED  /// 請求書発行（初期状態）
+  SETTLED /// 完了（入金消込が完了。売上計上対象）
+}
+
+/// 入金方法
+enum PaymentMethod {
+  CASH          /// 現金
+  BANK_TRANSFER /// 銀行振込
+}
+
+/// 品目マスタ（学費・寮費・入学金など）
+model BillingItem {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 品目名
+  name         String   @unique
+  /// 単価（税込）。「その他」品目は任意金額のため nullable
+  unitPrice    Decimal?
+  /// 表示順
+  displayOrder Int      @default(0)
+  /// 有効フラグ
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  /// この品目で作成された請求
+  invoices Invoice[]
+
+  @@map("billing_items")
+}
+
+/// 請求（学生ごと・月ごとの請求レコード）
+model Invoice {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId     String        @db.Uuid
+  /// 品目ID
+  billingItemId String        @db.Uuid
+  /// 対象年月（YYYY-MM 形式）
+  billingMonth  String
+  /// 金額
+  amount        Decimal
+  /// ステータス
+  status        InvoiceStatus @default(ISSUED)
+  /// 備考
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  /// 請求対象の学生
+  student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 請求品目
+  billingItem BillingItem @relation(fields: [billingItemId], references: [id], onDelete: Restrict)
+  /// この請求への入金
+  payments    Payment[]
+
+  @@index([studentId])
+  @@index([billingItemId])
+  @@map("invoices")
+}
+
+/// 入金（請求に対する入金レコード）
+model Payment {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId   String        @db.Uuid
+  /// 入金日
+  paymentDate DateTime      @db.Date
+  /// 金額
+  amount      Decimal
+  /// 入金方法
+  method      PaymentMethod
+  /// 消込対象請求ID（消込済みの場合に設定）
+  invoiceId   String?       @db.Uuid
+  /// 備考
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  /// 入金した学生
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 消込対象の請求
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([studentId])
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+/// 月次残高（学生ごとの月末時点の残高スナップショット）
+model MonthlyBalance {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId       String   @db.Uuid
+  /// 対象年月（YYYY-MM 形式）
+  month           String
+  /// 前月末残高
+  previousBalance Decimal  @default(0)
+  /// 当月請求額
+  monthlyCharge   Decimal  @default(0)
+  /// 当月入金額
+  monthlyPayment  Decimal  @default(0)
+  /// 当月末残高（自動算出: previousBalance + monthlyCharge - monthlyPayment）
+  balance         Decimal  @default(0)
+  createdAt       DateTime @default(now())
+
+  /// 対象学生
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, month])
+  @@index([studentId])
+  @@map("monthly_balances")
+}

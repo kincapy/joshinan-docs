@@ -1,0 +1,164 @@
+/// =============================================
+/// 募集業務 (14-recruitment)
+/// =============================================
+
+/// 申請ステータス
+enum ApplicationStatus {
+  PREPARING /// 書類準備中
+  SUBMITTED /// 申請済
+  GRANTED   /// 交付
+  DENIED    /// 不交付
+  WITHDRAWN /// 取下
+}
+
+/// 申請書類種別
+enum RecruitmentDocumentType {
+  APPLICATION_FORM  /// 在留資格認定証明書交付申請書
+  CHECKLIST         /// 提出書類一覧表・各種確認書
+  PASSPORT_COPY     /// 旅券写し
+  JAPANESE_ABILITY  /// 日本語能力資料
+  FINANCIAL_SUPPORT /// 経費支弁書
+  RELATIONSHIP_PROOF /// 経費支弁者との関係立証資料
+  BANK_BALANCE      /// 預金残高証明書
+  FUND_FORMATION    /// 資金形成経緯資料
+  SCHOLARSHIP       /// 奨学金証明
+  MINOR_SUPPORT     /// 未成年者の経費支弁に関する補足
+  REASON_STATEMENT  /// 理由書
+  OTHER             /// その他
+}
+
+/// 募集書類収集状態
+enum RecruitmentCollectionStatus {
+  NOT_RECEIVED /// 未受領
+  RECEIVED     /// 受領済
+  VERIFIED     /// 確認済
+  DEFICIENT    /// 不備あり
+}
+
+/// チェック種別
+enum CheckType {
+  COMPLETENESS /// 網羅性
+  TRANSLATION  /// 訳文有無
+  ORDER        /// 並び順
+}
+
+/// チェック結果
+enum CheckResult {
+  OK /// OK
+  NG /// NG
+}
+
+/// 募集期
+model RecruitmentCycle {
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 入学時期（school.prisma で定義された EnrollmentMonth を使用）
+  enrollmentMonth     EnrollmentMonth
+  /// 年度（西暦4桁）
+  fiscalYear          Int
+  /// 書類申請締切日
+  applicationDeadline DateTime        @db.Date
+  /// ビザ結果予定日
+  visaResultDate      DateTime?       @db.Date
+  /// 入国開始日
+  entryStartDate      DateTime?       @db.Date
+  /// 募集目標人数
+  targetCount         Int
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  /// この募集期の申請ケース (1:N)
+  applicationCases ApplicationCase[]
+
+  @@unique([enrollmentMonth, fiscalYear])
+  @@map("recruitment_cycles")
+}
+
+/// 申請ケース
+model ApplicationCase {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 募集期ID
+  recruitmentCycleId String            @db.Uuid
+  /// 候補者氏名（パスポート記載名）
+  candidateName      String
+  /// 国籍
+  nationality        String
+  /// エージェントID
+  agentId            String?           @db.Uuid
+  /// 申請番号（6桁。入管が付与）
+  applicationNumber  String?           @unique
+  /// 申請ステータス
+  status             ApplicationStatus @default(PREPARING)
+  /// 別表掲載国フラグ（必要書類の判定に使用）
+  isListedCountry    Boolean
+  /// 交付日（ステータスが GRANTED の場合のみ）
+  grantedDate        DateTime?         @db.Date
+  /// 不交付理由（ステータスが DENIED の場合のみ）
+  denialReason       String?
+  /// 学生ID（交付後に学生として登録されたらリンク）
+  studentId          String?           @db.Uuid
+  /// 備考
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  /// 所属募集期
+  recruitmentCycle RecruitmentCycle     @relation(fields: [recruitmentCycleId], references: [id], onDelete: Restrict)
+  /// 担当エージェント
+  agent            Agent?               @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  /// 交付後にリンクされる学生
+  student          Student?             @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// この申請の書類 (1:N)
+  documents        ApplicationDocument[]
+
+  @@index([recruitmentCycleId])
+  @@index([agentId])
+  @@index([studentId])
+  @@map("application_cases")
+}
+
+/// 申請書類
+model ApplicationDocument {
+  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 申請ケースID
+  applicationCaseId      String                      @db.Uuid
+  /// 書類種別
+  documentType           RecruitmentDocumentType
+  /// 収集状態
+  collectionStatus       RecruitmentCollectionStatus @default(NOT_RECEIVED)
+  /// アップロードされたファイルの保存先
+  filePath               String?
+  /// 外国語書類には訳文が必要
+  hasJapaneseTranslation Boolean                     @default(false)
+  /// 備考（不備内容など）
+  notes                  String?
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+
+  /// 所属申請ケース
+  applicationCase ApplicationCase      @relation(fields: [applicationCaseId], references: [id], onDelete: Cascade)
+  /// この書類のチェック結果 (1:N)
+  checkResults    DocumentCheckResult[]
+
+  @@index([applicationCaseId])
+  @@map("application_documents")
+}
+
+/// 書類チェック結果
+model DocumentCheckResult {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 申請書類ID
+  applicationDocumentId String      @db.Uuid
+  /// チェック種別
+  checkType             CheckType
+  /// 結果
+  result                CheckResult
+  /// 指摘事項（NG の場合の具体的な指摘内容）
+  findings              String?
+  createdAt             DateTime    @default(now())
+
+  /// 対象書類
+  applicationDocument ApplicationDocument @relation(fields: [applicationDocumentId], references: [id], onDelete: Cascade)
+
+  @@index([applicationDocumentId])
+  @@map("document_check_results")
+}

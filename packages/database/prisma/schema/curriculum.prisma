@@ -1,0 +1,125 @@
+/// =============================================
+/// カリキュラム・時間割 (03-curriculum)
+/// =============================================
+
+/// JLPTレベル
+enum JlptLevel {
+  N1 /// N1
+  N2 /// N2
+  N3 /// N3
+  N4 /// N4
+  N5 /// N5
+}
+
+/// 科目カテゴリ
+enum SubjectCategory {
+  GRAMMAR      /// 文法
+  READING      /// 読解
+  LISTENING    /// 聴解
+  CONVERSATION /// 会話
+  KANJI        /// 漢字
+  COMPOSITION  /// 作文
+  OTHER        /// その他
+}
+
+/// 時間帯区分
+enum TimeSlot {
+  MORNING   /// 午前
+  AFTERNOON /// 午後
+}
+
+/// 曜日
+enum DayOfWeek {
+  SUN /// 日
+  MON /// 月
+  TUE /// 火
+  WED /// 水
+  THU /// 木
+  FRI /// 金
+  SAT /// 土
+}
+
+/// 学期
+enum Term {
+  FIRST_HALF  /// 前期
+  SECOND_HALF /// 後期
+}
+
+/// 科目
+model Subject {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 科目名
+  name        String
+  /// カテゴリ
+  category    SubjectCategory
+  /// 対象レベル
+  targetLevel JlptLevel?
+  /// 説明
+  description String?
+  /// 有効フラグ
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  /// この科目が割り当てられた時間割枠
+  timetableSlots TimetableSlot[]
+
+  @@map("subjects")
+}
+
+/// 時限マスタ
+model Period {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 時限番号
+  periodNumber Int      @unique
+  /// 開始時刻（HH:mm 形式）
+  startTime    String
+  /// 終了時刻（HH:mm 形式）
+  endTime      String
+  /// 時間帯区分
+  timeSlot     TimeSlot
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  /// この時限に割り当てられた時間割枠
+  timetableSlots TimetableSlot[]
+
+  @@map("periods")
+}
+
+/// 時間割枠（クラス × 曜日 × 時限で一意に決まる授業枠）
+model TimetableSlot {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// クラスID
+  classId    String    @db.Uuid
+  /// 曜日
+  dayOfWeek  DayOfWeek
+  /// 時限ID
+  periodId   String    @db.Uuid
+  /// 科目ID
+  subjectId  String    @db.Uuid
+  /// 担当教員ID
+  teacherId  String?   @db.Uuid
+  /// 年度（西暦4桁）
+  fiscalYear Int
+  /// 学期
+  term       Term
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  /// 所属クラス
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  /// 該当時限
+  period  Period  @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  /// 割当科目
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  /// 担当教員
+  teacher Staff?  @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+
+  @@unique([classId, dayOfWeek, periodId, fiscalYear, term])
+  @@index([classId])
+  @@index([periodId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@map("timetable_slots")
+}

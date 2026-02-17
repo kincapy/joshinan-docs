@@ -1,0 +1,132 @@
+/// =============================================
+/// 特定技能・職業紹介 (15-specified-skilled-worker)
+/// =============================================
+
+/// 特定技能分野
+enum SpecifiedSkilledWorkerField {
+  NURSING_CARE       /// 介護
+  BUILDING_CLEANING  /// ビルクリーニング
+  MANUFACTURING      /// 素形材・産業機械・電気電子情報関連製造業
+  CONSTRUCTION       /// 建設
+  SHIPBUILDING       /// 造船・舶用工業
+  AUTO_MAINTENANCE   /// 自動車整備
+  AVIATION           /// 航空
+  ACCOMMODATION      /// 宿泊
+  AGRICULTURE        /// 農業
+  FISHERY            /// 漁業
+  FOOD_MANUFACTURING /// 飲食料品製造業
+  FOOD_SERVICE       /// 外食業
+}
+
+/// 求人ステータス
+enum JobPostingStatus {
+  OPEN   /// 募集中
+  CLOSED /// 募集終了
+  FILLED /// 充足（募集人数に達した）
+}
+
+/// マッチングステータス
+enum JobMatchStatus {
+  CANDIDATE    /// 候補
+  RECOMMENDED  /// 推薦中
+  INTERVIEWING /// 面接中
+  OFFERED      /// 内定
+  DECLINED     /// 辞退
+  REJECTED     /// 不合格
+}
+
+/// 支援計画ステータス
+enum SupportPlanStatus {
+  ACTIVE    /// 実施中
+  COMPLETED /// 完了
+  CANCELLED /// 取消
+}
+
+/// 求人情報
+model JobPosting {
+  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 企業名
+  companyName    String
+  /// 職種分野（特定技能12分野）
+  jobCategory    SpecifiedSkilledWorkerField
+  /// 職種詳細
+  jobTitle       String
+  /// 勤務地
+  workLocation   String
+  /// 給与（月額、円）
+  monthlySalary  Int?
+  /// 雇用形態
+  employmentType String
+  /// 求人ステータス
+  status         JobPostingStatus           @default(OPEN)
+  /// 募集人数
+  openings       Int                        @default(1)
+  /// 備考
+  notes          String?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  /// この求人へのマッチング (1:N)
+  jobMatches JobMatch[]
+
+  @@map("job_postings")
+}
+
+/// マッチング（学生と求人の紐付け）
+model JobMatch {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 求人ID
+  jobPostingId    String         @db.Uuid
+  /// 学生ID
+  studentId       String         @db.Uuid
+  /// マッチングステータス
+  status          JobMatchStatus @default(CANDIDATE)
+  /// 推薦日（ステータスが RECOMMENDED 以降で設定）
+  recommendedDate DateTime?      @db.Date
+  /// 面接日（ステータスが INTERVIEWING 以降で設定）
+  interviewDate   DateTime?      @db.Date
+  /// 内定日（ステータスが OFFERED で設定）
+  offerDate       DateTime?      @db.Date
+  /// 備考
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  /// 対象求人
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Restrict)
+  /// 対象学生
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  /// 同一学生 × 同一求人の組み合わせは一意
+  @@unique([jobPostingId, studentId])
+  @@index([jobPostingId])
+  @@index([studentId])
+  @@map("job_matches")
+}
+
+/// 支援計画（特定技能外国人への支援計画）
+model SupportPlan {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId           String            @db.Uuid
+  /// 支援開始日
+  startDate           DateTime          @db.Date
+  /// 支援終了日（継続中の場合は null）
+  endDate             DateTime?         @db.Date
+  /// 登録支援機関名
+  supportOrganization String
+  /// 月額支援料（円）
+  monthlySupportFee   Int?
+  /// 支援内容
+  supportDetails      String?
+  /// ステータス
+  status              SupportPlanStatus @default(ACTIVE)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  /// 支援対象の学生
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  @@index([studentId])
+  @@map("support_plans")
+}

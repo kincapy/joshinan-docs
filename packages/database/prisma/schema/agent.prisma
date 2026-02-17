@@ -1,0 +1,115 @@
+/// =============================================
+/// エージェント管理 (07-agent-management)
+/// =============================================
+
+/// エージェント種別
+enum AgentType {
+  SCHOOL_OPERATOR /// 自社学校運営（学生の顔が見える状態で対応）
+  BROKER          /// 紹介のみ（自社学校なし）
+  INDIVIDUAL      /// 個人エージェント（日本在住の外国人等）
+}
+
+/// エージェント請求書ステータス
+enum AgentInvoiceStatus {
+  UNPAID  /// 未払い
+  PARTIAL /// 一部支払い済み
+  PAID    /// 支払い完了
+}
+
+/// エージェント（海外送出機関・仲介業者）
+model Agent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// エージェント名（正規化ルール適用後の名称）
+  name          String    @unique
+  /// 国
+  country       String
+  /// 種別
+  type          AgentType
+  /// 紹介手数料（1名あたり、円）
+  feePerStudent Decimal?
+  /// 連絡先
+  contactInfo   String?
+  /// 備考
+  notes         String?
+  /// 有効フラグ
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  /// このエージェント経由の学生
+  students         Student[]
+  /// このエージェントの別名
+  aliases          AgentAlias[]
+  /// このエージェントへの請求書
+  agentInvoices    AgentInvoice[]
+  /// このエージェント経由の申請ケース
+  applicationCases ApplicationCase[]
+
+  @@map("agents")
+}
+
+/// エージェント別名（正規化前のエージェント名を保持。照合時に使用）
+model AgentAlias {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// エージェントID
+  agentId   String   @db.Uuid
+  /// 別名（請求書・契約書に記載される法人名等）
+  aliasName String   @unique
+  createdAt DateTime @default(now())
+
+  /// 所属エージェント
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("agent_aliases")
+}
+
+/// エージェント請求書
+model AgentInvoice {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 請求書番号（INV-XXX 形式）
+  invoiceNumber String             @unique
+  /// エージェントID
+  agentId       String             @db.Uuid
+  /// 請求日
+  invoiceDate   DateTime           @db.Date
+  /// 金額
+  amount        Decimal
+  /// ステータス
+  status        AgentInvoiceStatus @default(UNPAID)
+  /// 備考
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  /// 請求元エージェント
+  agent    Agent          @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  /// この請求書への支払い
+  payments AgentPayment[]
+
+  @@index([agentId])
+  @@map("agent_invoices")
+}
+
+/// エージェント支払い
+model AgentPayment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 支払番号（PAY-XXX 形式）
+  paymentNumber  String   @unique
+  /// エージェント請求書ID
+  agentInvoiceId String   @db.Uuid
+  /// 支払日
+  paymentDate    DateTime @db.Date
+  /// 金額
+  amount         Decimal
+  /// 備考
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  /// 対象請求書
+  agentInvoice AgentInvoice @relation(fields: [agentInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([agentInvoiceId])
+  @@map("agent_payments")
+}
