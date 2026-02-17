@@ -2,37 +2,38 @@
 /// 特定技能・職業紹介 (15-specified-skilled-worker)
 /// =============================================
 
-/// 特定技能分野
-enum SpecifiedSkilledWorkerField {
+/// 特定技能分野（当社の紹介実績がある5分野のみ）
+enum SswField {
   NURSING_CARE       /// 介護
-  BUILDING_CLEANING  /// ビルクリーニング
-  MANUFACTURING      /// 素形材・産業機械・電気電子情報関連製造業
-  CONSTRUCTION       /// 建設
-  SHIPBUILDING       /// 造船・舶用工業
-  AUTO_MAINTENANCE   /// 自動車整備
-  AVIATION           /// 航空
   ACCOMMODATION      /// 宿泊
-  AGRICULTURE        /// 農業
-  FISHERY            /// 漁業
-  FOOD_MANUFACTURING /// 飲食料品製造業
   FOOD_SERVICE       /// 外食業
+  FOOD_MANUFACTURING /// 飲食料品製造業
+  AUTO_TRANSPORT     /// 自動車運送業
 }
 
-/// 求人ステータス
-enum JobPostingStatus {
-  OPEN   /// 募集中
-  CLOSED /// 募集終了
-  FILLED /// 充足（募集人数に達した）
+/// 案件ステータス（8段階）
+enum CaseStatus {
+  PROSPECTING /// 営業中
+  PREPARING   /// 書類準備中
+  APPLIED     /// 申請中
+  REVIEWING   /// 審査中
+  APPROVED    /// 許可済み
+  EMPLOYED    /// 入社済み
+  SUPPORTING  /// 支援中
+  CLOSED      /// 終了
 }
 
-/// マッチングステータス
-enum JobMatchStatus {
-  CANDIDATE    /// 候補
-  RECOMMENDED  /// 推薦中
-  INTERVIEWING /// 面接中
-  OFFERED      /// 内定
-  DECLINED     /// 辞退
-  REJECTED     /// 不合格
+/// 書類ステータス
+enum DocumentStatus {
+  NOT_STARTED    /// 未着手
+  DRAFTING       /// 作成中（DOC系）
+  REQUESTED      /// 収集依頼中（COL系）
+  COLLECTED      /// 収集済み
+  AUTO_FILLED    /// 自動入力済み
+  PENDING_REVIEW /// 確認待ち
+  COMPLETED      /// 完了
+  NOT_REQUIRED   /// 不要（免除・条件外）
+  RETURNED       /// 差戻し（不備あり）
 }
 
 /// 支援計画ステータス
@@ -42,91 +43,188 @@ enum SupportPlanStatus {
   CANCELLED /// 取消
 }
 
-/// 求人情報
-model JobPosting {
-  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  /// 企業名
-  companyName    String
-  /// 職種分野（特定技能12分野）
-  jobCategory    SpecifiedSkilledWorkerField
-  /// 職種詳細
-  jobTitle       String
-  /// 勤務地
-  workLocation   String
-  /// 給与（月額、円）
-  monthlySalary  Int?
-  /// 雇用形態
-  employmentType String
-  /// 求人ステータス
-  status         JobPostingStatus           @default(OPEN)
-  /// 募集人数
-  openings       Int                        @default(1)
-  /// 備考
-  notes          String?
-  createdAt      DateTime                   @default(now())
-  updatedAt      DateTime                   @updatedAt
-
-  /// この求人へのマッチング (1:N)
-  jobMatches JobMatch[]
-
-  @@map("job_postings")
+/// 特定技能 請求種別
+enum SswInvoiceType {
+  REFERRAL /// 紹介料（入社時一括）
+  SUPPORT  /// 登録支援費（毎月）
 }
 
-/// マッチング（学生と求人の紐付け）
-model JobMatch {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  /// 求人ID
-  jobPostingId    String         @db.Uuid
-  /// 学生ID
-  studentId       String         @db.Uuid
-  /// マッチングステータス
-  status          JobMatchStatus @default(CANDIDATE)
-  /// 推薦日（ステータスが RECOMMENDED 以降で設定）
-  recommendedDate DateTime?      @db.Date
-  /// 面接日（ステータスが INTERVIEWING 以降で設定）
-  interviewDate   DateTime?      @db.Date
-  /// 内定日（ステータスが OFFERED で設定）
-  offerDate       DateTime?      @db.Date
+/// 特定技能 請求ステータス
+enum SswInvoiceStatus {
+  DRAFT   /// 下書き（自動生成直後）
+  ISSUED  /// 発行済み
+  PAID    /// 入金済み
+  OVERDUE /// 未入金（支払期日超過）
+}
+
+/// 受入れ企業
+model Company {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 企業名
+  name            String
+  /// 代表者名
+  representative  String
+  /// 郵便番号
+  postalCode      String?
+  /// 所在地
+  address         String
+  /// 電話番号
+  phone           String
+  /// 分野（当社実績のある5分野）
+  field           SswField
+  /// 営業許可（旅館業許可等。分野により必要）
+  businessLicense String?
+  /// 法人番号（13桁）
+  corporateNumber String?  @unique
+  /// 設立年月日
+  establishedDate DateTime? @db.Date
   /// 備考
   notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  /// 対象求人
-  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Restrict)
-  /// 対象学生
-  student    Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// この企業の案件 (1:N)
+  sswCases    SswCase[]
+  /// この企業への請求 (1:N)
+  sswInvoices SswInvoice[]
 
-  /// 同一学生 × 同一求人の組み合わせは一意
-  @@unique([jobPostingId, studentId])
-  @@index([jobPostingId])
-  @@index([studentId])
-  @@map("job_matches")
+  @@map("companies")
 }
 
-/// 支援計画（特定技能外国人への支援計画）
-model SupportPlan {
-  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+/// 案件（学生と企業を紐づけ、営業から支援終了までのライフサイクルを管理）
+model SswCase {
+  id                String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 企業ID
+  companyId         String     @db.Uuid
   /// 学生ID
-  studentId           String            @db.Uuid
-  /// 支援開始日
-  startDate           DateTime          @db.Date
-  /// 支援終了日（継続中の場合は null）
-  endDate             DateTime?         @db.Date
-  /// 登録支援機関名
-  supportOrganization String
-  /// 月額支援料（円）
-  monthlySupportFee   Int?
-  /// 支援内容
-  supportDetails      String?
-  /// ステータス
-  status              SupportPlanStatus @default(ACTIVE)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  studentId         String     @db.Uuid
+  /// 分野
+  field             SswField
+  /// ステータス（8段階）
+  status            CaseStatus @default(PROSPECTING)
+  /// 申請日（APPLIED 以降で設定）
+  applicationDate   DateTime?  @db.Date
+  /// 許可日（APPROVED 以降で設定）
+  approvalDate      DateTime?  @db.Date
+  /// 入社日（EMPLOYED 以降で設定）
+  entryDate         DateTime?  @db.Date
+  /// 紹介料（円、デフォルト150,000）
+  referralFee       Int        @default(150000)
+  /// 月額支援費（円、デフォルト10,000）
+  monthlySupportFee Int        @default(10000)
+  /// 備考
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
+  /// 受入れ企業
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// 対象学生
+  student     Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// この案件の書類 (1:N)
+  documents   CaseDocument[]
+  /// この案件の支援計画 (1:0..1)
+  supportPlan SupportPlan?
+  /// この案件の請求 (1:N)
+  sswInvoices SswInvoice[]
+
+  /// 同一学生 × 同一企業の組み合わせは一意
+  @@unique([companyId, studentId])
+  @@index([companyId])
+  @@index([studentId])
+  @@map("ssw_cases")
+}
+
+/// 案件書類（申請書類 DOC-001〜013 と証憑書類 COL-001〜023）
+model CaseDocument {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 案件ID
+  caseId       String         @db.Uuid
+  /// 書類コード（DOC-001〜DOC-013, COL-001〜COL-023）
+  documentCode String
+  /// 書類名
+  documentName String
+  /// ステータス
+  status       DocumentStatus @default(NOT_STARTED)
+  /// 必須（条件分岐ルールで判定）
+  required     Boolean        @default(true)
+  /// 自動入力済み（DOC系で自動入力した場合）
+  autoFilled   Boolean        @default(false)
+  /// スキップ理由（免除の場合）
+  skipReason   String?
+  /// 備考
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  /// 所属案件
+  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  /// 同一案件内で同一書類コードは一意
+  @@unique([caseId, documentCode])
+  @@index([caseId])
+  @@map("case_documents")
+}
+
+/// 支援計画（特定技能外国人への義務的支援計画）
+model SupportPlan {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 案件ID
+  caseId    String            @unique @db.Uuid
+  /// 学生ID
+  studentId String            @db.Uuid
+  /// 支援開始日
+  startDate DateTime          @db.Date
+  /// 支援終了日（継続中の場合は null）
+  endDate   DateTime?         @db.Date
+  /// ステータス
+  status    SupportPlanStatus @default(ACTIVE)
+  /// 備考
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  /// 対象案件
+  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
   /// 支援対象の学生
   student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
 
   @@index([studentId])
   @@map("support_plans")
+}
+
+/// 特定技能 請求（受入れ企業への紹介料・月額支援費）
+model SswInvoice {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 案件ID
+  caseId        String           @db.Uuid
+  /// 企業ID
+  companyId     String           @db.Uuid
+  /// 請求番号（YYYYMMDD-連番）
+  invoiceNumber String           @unique
+  /// 請求種別
+  invoiceType   SswInvoiceType
+  /// 金額（税抜、円）
+  amount        Int
+  /// 消費税（円、amount の 10%）
+  tax           Int
+  /// 発行日
+  issueDate     DateTime         @db.Date
+  /// 支払期日（翌月末）
+  dueDate       DateTime         @db.Date
+  /// ステータス
+  status        SswInvoiceStatus @default(DRAFT)
+  /// 備考
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  /// 対象案件
+  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  /// 請求先企業
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@index([caseId])
+  @@index([companyId])
+  @@map("ssw_invoices")
 }
