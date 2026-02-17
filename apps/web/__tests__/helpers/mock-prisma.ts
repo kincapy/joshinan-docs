@@ -23,6 +23,7 @@ export function createMockPrisma() {
     },
     student: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       count: vi.fn(),
     },
@@ -36,6 +37,38 @@ export function createMockPrisma() {
     generatedDocument: {
       findMany: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
+    },
+    company: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    sswCase: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    caseDocument: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    sswInvoice: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    supportPlan: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
     },
   }
