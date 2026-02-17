@@ -12,6 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const INVOICE_TYPE_LABELS: Record<string, string> = {
@@ -62,18 +65,25 @@ export default function InvoicesPage() {
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (typeFilter) params.set('invoiceType', typeFilter)
-    if (statusFilter) params.set('status', statusFilter)
-    if (search) params.set('search', search)
-    if (issueMonth) params.set('issueMonth', issueMonth)
-    params.set('page', String(page))
+    try {
+      const params = new URLSearchParams()
+      if (typeFilter) params.set('invoiceType', typeFilter)
+      if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
+      if (issueMonth) params.set('issueMonth', issueMonth)
+      params.set('page', String(page))
 
-    const res = await fetch(`/api/ssw/invoices?${params.toString()}`)
-    const json = await res.json()
-    setInvoices(json.data || [])
-    if (json.pagination) setTotalPages(json.pagination.totalPages)
-    setLoading(false)
+      const res = await fetch(`/api/ssw/invoices?${params.toString()}`)
+      if (!res.ok) throw new Error('データの取得に失敗しました')
+      const json = await res.json()
+      setInvoices(json.data || [])
+      if (json.pagination) setTotalPages(json.pagination.totalPages)
+    } catch (err) {
+      console.error(err)
+      setInvoices([])
+    } finally {
+      setLoading(false)
+    }
   }, [typeFilter, statusFilter, search, issueMonth, page])
 
   useEffect(() => {
@@ -82,12 +92,18 @@ export default function InvoicesPage() {
 
   /** ステータスをインライン変更 */
   async function handleStatusChange(invoiceId: string, newStatus: string) {
-    await fetch(`/api/ssw/invoices/${invoiceId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
-    fetchInvoices()
+    try {
+      const res = await fetch(`/api/ssw/invoices/${invoiceId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) throw new Error('ステータスの更新に失敗しました')
+      fetchInvoices()
+    } catch (err) {
+      console.error(err)
+      alert('ステータスの更新に失敗しました')
+    }
   }
 
   function handleFilterChange(setter: (v: string) => void, value: string) {
@@ -104,8 +120,8 @@ export default function InvoicesPage() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">請求種別</label>
-              <select
+              <Label className="text-sm text-muted-foreground">請求種別</Label>
+              <Select
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 value={typeFilter}
                 onChange={(e) => handleFilterChange(setTypeFilter, e.target.value)}
@@ -113,11 +129,11 @@ export default function InvoicesPage() {
                 <option value="">すべて</option>
                 <option value="REFERRAL">紹介料</option>
                 <option value="SUPPORT">登録支援費</option>
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">ステータス</label>
-              <select
+              <Label className="text-sm text-muted-foreground">ステータス</Label>
+              <Select
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 value={statusFilter}
                 onChange={(e) => handleFilterChange(setStatusFilter, e.target.value)}
@@ -126,11 +142,11 @@ export default function InvoicesPage() {
                 {INVOICE_STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">企業名</label>
-              <input
+              <Label className="text-sm text-muted-foreground">企業名</Label>
+              <Input
                 type="text"
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 placeholder="検索..."
@@ -139,8 +155,8 @@ export default function InvoicesPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">発行月</label>
-              <input
+              <Label className="text-sm text-muted-foreground">発行月</Label>
+              <Input
                 type="month"
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 value={issueMonth}

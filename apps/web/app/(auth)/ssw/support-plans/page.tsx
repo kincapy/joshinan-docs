@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -49,15 +51,22 @@ export default function SupportPlansPage() {
 
   const fetchPlans = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (statusFilter) params.set('status', statusFilter)
-    params.set('page', String(page))
+    try {
+      const params = new URLSearchParams()
+      if (statusFilter) params.set('status', statusFilter)
+      params.set('page', String(page))
 
-    const res = await fetch(`/api/ssw/support-plans?${params.toString()}`)
-    const json = await res.json()
-    setPlans(json.data || [])
-    if (json.pagination) setTotalPages(json.pagination.totalPages)
-    setLoading(false)
+      const res = await fetch(`/api/ssw/support-plans?${params.toString()}`)
+      if (!res.ok) throw new Error('データの取得に失敗しました')
+      const json = await res.json()
+      setPlans(json.data || [])
+      if (json.pagination) setTotalPages(json.pagination.totalPages)
+    } catch (err) {
+      console.error(err)
+      setPlans([])
+    } finally {
+      setLoading(false)
+    }
   }, [statusFilter, page])
 
   useEffect(() => {
@@ -70,17 +79,23 @@ export default function SupportPlansPage() {
     if (!plan) return
 
     // COMPLETED に変更する場合は今日の日付を endDate にセット
-    const body: Record<string, unknown> = { id: planId, status: newStatus }
+    const body: Record<string, unknown> = { status: newStatus }
     if (newStatus === 'COMPLETED' && !plan.endDate) {
       body.endDate = new Date().toISOString().slice(0, 10)
     }
 
-    await fetch('/api/ssw/support-plans', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    fetchPlans()
+    try {
+      const res = await fetch(`/api/ssw/support-plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('ステータスの更新に失敗しました')
+      fetchPlans()
+    } catch (err) {
+      console.error(err)
+      alert('ステータスの更新に失敗しました')
+    }
   }
 
   return (
@@ -92,8 +107,8 @@ export default function SupportPlansPage() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">ステータス</label>
-              <select
+              <Label className="text-sm text-muted-foreground">ステータス</Label>
+              <Select
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 value={statusFilter}
                 onChange={(e) => {
@@ -105,7 +120,7 @@ export default function SupportPlansPage() {
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         </CardContent>

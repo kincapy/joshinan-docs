@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { ArrowLeft } from 'lucide-react'
 
 const FIELD_OPTIONS = [
@@ -45,14 +48,21 @@ export default function NewCasePage() {
 
   // 企業・学生の選択肢を取得
   const fetchOptions = useCallback(async () => {
-    const [compRes, stuRes] = await Promise.all([
-      fetch('/api/ssw/companies?limit=200'),
-      fetch('/api/students?per=200'),
-    ])
-    const compJson = await compRes.json()
-    const stuJson = await stuRes.json()
-    setCompanies(compJson.data || [])
-    setStudents(stuJson.data || [])
+    try {
+      const [compRes, stuRes] = await Promise.all([
+        fetch('/api/ssw/companies?limit=200'),
+        fetch('/api/students?per=200'),
+      ])
+      if (!compRes.ok || !stuRes.ok) throw new Error('選択肢の取得に失敗しました')
+      const compJson = await compRes.json()
+      const stuJson = await stuRes.json()
+      setCompanies(compJson.data || [])
+      setStudents(stuJson.data || [])
+    } catch (err) {
+      console.error(err)
+      setCompanies([])
+      setStudents([])
+    }
   }, [])
 
   useEffect(() => {
@@ -72,20 +82,26 @@ export default function NewCasePage() {
     setSaving(true)
     setError('')
 
-    const res = await fetch('/api/ssw/cases', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    const json = await res.json()
+    try {
+      const res = await fetch('/api/ssw/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const json = await res.json()
 
-    if (!res.ok) {
-      setError(json.error?.message || '登録に失敗しました')
+      if (!res.ok) {
+        setError(json.error?.message || '登録に失敗しました')
+        return
+      }
+
+      router.push(`/ssw/cases/${json.data.id}`)
+    } catch (err) {
+      console.error(err)
+      setError('ネットワークエラーが発生しました')
+    } finally {
       setSaving(false)
-      return
     }
-
-    router.push(`/ssw/cases/${json.data.id}`)
   }
 
   return (
@@ -113,10 +129,10 @@ export default function NewCasePage() {
             <div className="grid gap-4 md:grid-cols-2">
               {/* 企業 */}
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <Label className="mb-1 block text-sm font-medium">
                   企業 <span className="text-destructive">*</span>
-                </label>
-                <select
+                </Label>
+                <Select
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={form.companyId}
                   onChange={(e) => updateField('companyId', e.target.value)}
@@ -125,15 +141,15 @@ export default function NewCasePage() {
                   {companies.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* 学生 */}
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <Label className="mb-1 block text-sm font-medium">
                   学生 <span className="text-destructive">*</span>
-                </label>
-                <select
+                </Label>
+                <Select
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={form.studentId}
                   onChange={(e) => updateField('studentId', e.target.value)}
@@ -144,15 +160,15 @@ export default function NewCasePage() {
                       {s.studentNumber} - {s.nameKanji || s.nameEn}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* 分野 */}
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <Label className="mb-1 block text-sm font-medium">
                   分野 <span className="text-destructive">*</span>
-                </label>
-                <select
+                </Label>
+                <Select
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={form.field}
                   onChange={(e) => updateField('field', e.target.value)}
@@ -161,13 +177,13 @@ export default function NewCasePage() {
                   {FIELD_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* 紹介料 */}
               <div>
-                <label className="mb-1 block text-sm font-medium">紹介料（円）</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">紹介料（円）</Label>
+                <Input
                   type="number"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={form.referralFee}
@@ -177,8 +193,8 @@ export default function NewCasePage() {
 
               {/* 月額支援費 */}
               <div>
-                <label className="mb-1 block text-sm font-medium">月額支援費（円）</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">月額支援費（円）</Label>
+                <Input
                   type="number"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={form.monthlySupportFee}
@@ -189,7 +205,7 @@ export default function NewCasePage() {
 
             {/* 備考 */}
             <div>
-              <label className="mb-1 block text-sm font-medium">備考</label>
+              <Label className="mb-1 block text-sm font-medium">備考</Label>
               <textarea
                 className="w-full rounded border px-3 py-2 text-sm"
                 rows={3}
