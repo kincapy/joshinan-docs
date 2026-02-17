@@ -26,6 +26,18 @@ export function createMockPrisma() {
       findUniqueOrThrow: vi.fn(),
       count: vi.fn(),
     },
+    documentTemplate: {
+      findMany: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    generatedDocument: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+    },
   }
 }
 

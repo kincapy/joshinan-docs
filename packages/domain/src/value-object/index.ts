@@ -79,6 +79,9 @@ export type { AttendanceAlertLevel } from './attendance-alert-level.vo'
 export { reportStatus } from './report-status.vo'
 export type { ReportStatus } from './report-status.vo'
 
+export { attendanceTerm } from './attendance-term.vo'
+export type { AttendanceTerm } from './attendance-term.vo'
+
 // =============================================
 // 06-tuition
 // =============================================
