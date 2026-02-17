@@ -326,6 +326,15 @@ export default defineConfig({
                 { text: 'UIUX定義', link: '/02-system-specification/17-documents/02-uiux' },
               ],
             },
+            {
+              text: '18 プロジェクト',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/18-project/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/18-project/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/18-project/02-uiux' },
+              ],
+            },
           ],
         },
       ],
