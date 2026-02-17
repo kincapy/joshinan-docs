@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, GraduationCap, Users, BookOpen, School, ClipboardCheck, Wallet, Building2, FileText, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, Users, BookOpen, School, ClipboardCheck, Wallet, Building2, FileText, FileOutput, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /** メニュー項目 */
@@ -13,6 +13,7 @@ const menuItems = [
   { title: '施設管理', url: '/facilities/dormitories', icon: Building2 },
   { title: 'カリキュラム', url: '/curriculum/subjects', icon: BookOpen },
   { title: '入管報告', url: '/immigration', icon: FileText },
+  { title: '社内文書', url: '/documents', icon: FileOutput },
   { title: '設定', url: '/settings/school', icon: Settings },
 ]
 
