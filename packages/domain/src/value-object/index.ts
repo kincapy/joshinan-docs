@@ -34,6 +34,12 @@ export type { CareerResult } from './career-result.vo'
 export { interviewType } from './interview-type.vo'
 export type { InterviewType } from './interview-type.vo'
 
+export { examType } from './exam-type.vo'
+export type { ExamType } from './exam-type.vo'
+
+export { examResult } from './exam-result.vo'
+export type { ExamResult } from './exam-result.vo'
+
 // =============================================
 // 03-curriculum
 // =============================================

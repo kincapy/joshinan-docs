@@ -57,6 +57,23 @@ enum InterviewType {
   OTHER         /// その他
 }
 
+/// 試験種別
+enum ExamType {
+  JLPT      /// 日本語能力試験（N1〜N5）
+  JFT_BASIC /// 国際交流基金日本語基礎テスト
+  NAT_TEST  /// NAT-TEST
+  J_TEST    /// J-TEST（実用日本語検定）
+  SSW_SKILL /// 特定技能評価試験（技能）
+  OTHER     /// その他
+}
+
+/// 試験結果
+enum ExamResult {
+  PASSED  /// 合格
+  FAILED  /// 不合格
+  PENDING /// 結果待ち
+}
+
 /// 学生（中核エンティティ）
 model Student {
   id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -146,6 +163,8 @@ model Student {
 
   /// 勤務先情報 (1:N, 最大3件)
   employments          StudentEmployment[]
+  /// 資格証情報 (1:N)
+  certifications       StudentCertification[]
   /// 面談記録 (1:N)
   interviewRecords     InterviewRecord[]
   /// クラス在籍履歴 (1:N)
@@ -225,4 +244,33 @@ model InterviewRecord {
   @@index([studentId])
   @@index([staffId])
   @@map("interview_records")
+}
+
+/// 資格証（JLPT・特定技能試験等の受験・合格情報）
+model StudentCertification {
+  id                String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId         String     @db.Uuid
+  /// 試験種別
+  examType          ExamType
+  /// レベル・級（N1〜N5、業種名など。試験によって形式が異なる）
+  level             String?
+  /// 受験日
+  examDate          DateTime   @db.Date
+  /// 合否
+  result            ExamResult
+  /// スコア（点数がある試験の場合）
+  score             Int?
+  /// 証明書番号
+  certificateNumber String?
+  /// 備考
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  /// 対象学生
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("student_certifications")
 }

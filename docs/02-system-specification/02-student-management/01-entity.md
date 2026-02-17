@@ -58,6 +58,7 @@ title: エンティティ定義
 - Student → ClassEnrollment: クラス在籍履歴 (1:N)。現在のクラスは最新の ClassEnrollment から取得
 - Student → Staff: 出迎え担当 (N:1)
 - Student → StudentEmployment: 勤務先情報 (1:N、最大3件)
+- Student → StudentCertification: 資格証情報 (1:N)
 - Student → InterviewRecord: 面談記録 (1:N)
 
 ### 保護ルール
@@ -115,6 +116,36 @@ title: エンティティ定義
 
 - InterviewRecord → Student: 対象学生 (N:1)
 - InterviewRecord → Staff: 担当者 (N:1)
+
+---
+
+## StudentCertification / 資格証
+
+学生が取得・受験した各種資格試験の情報を管理する。JLPT・特定技能試験・NAT-TESTなど、試験の種類を問わず汎用的に登録できる設計。
+
+| プロパティ | 英語名 | 型 | デフォルト | nullable | unique | 制約・バリデーション |
+|-----------|--------|-----|-----------|----------|--------|---------------------|
+| ID | id | UUID | auto | - | o | PK |
+| 学生ID | studentId | UUID | - | - | - | FK → Student |
+| 試験種別 | examType | Enum(ExamType) | - | - | - | |
+| レベル・級 | level | String | - | o | - | N1〜N5、業種名など。試験によって形式が異なる |
+| 受験日 | examDate | Date | - | - | - | |
+| 合否 | result | Enum(ExamResult) | - | - | - | |
+| スコア | score | Int | - | o | - | 点数がある試験の場合 |
+| 証明書番号 | certificateNumber | String | - | o | - | |
+| 備考 | notes | String | - | o | - | |
+| 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+
+### リレーション
+
+- StudentCertification → Student: 対象学生 (N:1)
+
+### ビジネスルール
+
+- 同一学生・同一試験種別で複数レコードを持てる（再受験の記録）
+- JLPT の場合、level は「N1」〜「N5」のいずれか
+- 特定技能評価試験の場合、level は業種名（例：「介護」「外食」「建設」）
 
 ---
 
@@ -181,3 +212,22 @@ title: エンティティ定義
 | ATTENDANCE | 出席指導 |
 | LIFE_GUIDANCE | 生活指導 |
 | OTHER | その他 |
+
+### ExamType / 試験種別
+
+| 値 | 表示名 | 備考 |
+|----|--------|------|
+| JLPT | 日本語能力試験 | N1〜N5。進学・就職・在留資格変更に必要 |
+| JFT_BASIC | 国際交流基金日本語基礎テスト | 特定技能の日本語要件 |
+| NAT_TEST | NAT-TEST | JLPT の代替として使われることがある |
+| J_TEST | J-TEST | 実用日本語検定 |
+| SSW_SKILL | 特定技能評価試験（技能） | 業種別の技能試験。level に業種名を入力 |
+| OTHER | その他 | |
+
+### ExamResult / 試験結果
+
+| 値 | 表示名 |
+|----|--------|
+| PASSED | 合格 |
+| FAILED | 不合格 |
+| PENDING | 結果待ち |
