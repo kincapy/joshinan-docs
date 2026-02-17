@@ -17,14 +17,6 @@ const createSupportPlanSchema = z.object({
   notes: z.string().optional(),
 })
 
-/** 支援計画更新スキーマ */
-const updateSupportPlanSchema = z.object({
-  id: z.string().uuid(),
-  status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
-  endDate: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-})
-
 /**
  * GET /api/ssw/support-plans - 支援計画一覧
  * フィルタ: status
@@ -37,8 +29,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (status) where.status = status
 
     const [plans, total] = await Promise.all([
@@ -92,48 +83,6 @@ export async function POST(request: NextRequest) {
         endDate: body.endDate ? new Date(body.endDate) : null,
         notes: body.notes,
       },
-      include: {
-        sswCase: {
-          include: {
-            company: { select: { id: true, name: true } },
-          },
-        },
-        student: {
-          select: { id: true, nameEn: true, nameKanji: true, studentNumber: true },
-        },
-      },
-    })
-
-    return ok(plan)
-  } catch (error) {
-    return handleApiError(error)
-  }
-}
-
-/**
- * PUT /api/ssw/support-plans - 支援計画更新（ステータス変更）
- */
-export async function PUT(request: NextRequest) {
-  try {
-    await requireAuth()
-    const body = await parseBody(request, updateSupportPlanSchema)
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = {}
-    if (body.status) data.status = body.status
-    if (body.endDate !== undefined) {
-      data.endDate = body.endDate ? new Date(body.endDate) : null
-    }
-    if (body.notes !== undefined) data.notes = body.notes
-
-    // COMPLETED に変更する場合は endDate が必須
-    if (body.status === 'COMPLETED' && !body.endDate) {
-      return errorResponse('完了に変更する場合は終了日を入力してください', 400)
-    }
-
-    const plan = await prisma.supportPlan.update({
-      where: { id: body.id },
-      data,
       include: {
         sswCase: {
           include: {
