@@ -11,7 +11,7 @@ erDiagram
     Company ||--o{ SswCase : "受入れ"
     Student ||--o{ SswCase : "対象者"
     SswCase ||--o{ CaseDocument : "書類"
-    SswCase ||--o{ Invoice : "請求"
+    SswCase ||--o{ SswInvoice : "請求"
     SswCase ||--o| SupportPlan : "支援計画"
 
     Company {
@@ -51,12 +51,13 @@ erDiagram
         Date endDate
         Enum status
     }
-    Invoice {
+    SswInvoice {
         UUID id PK
         UUID caseId FK
         UUID companyId FK
         Enum invoiceType
         Int amount
+        Int tax
         Date issueDate
         Date dueDate
         Enum status
@@ -88,7 +89,7 @@ erDiagram
 ### リレーション
 
 - Company → SswCase: この企業の案件 (1:N)
-- Company → Invoice: この企業への請求 (1:N)
+- Company → SswInvoice: この企業への請求 (1:N)
 
 ---
 
@@ -118,7 +119,7 @@ erDiagram
 - SswCase → Student: 対象学生 (N:1) ※ Student は 02-student-management で定義
 - SswCase → CaseDocument: この案件の書類 (1:N)
 - SswCase → SupportPlan: この案件の支援計画 (1:0..1)
-- SswCase → Invoice: この案件の請求 (1:N)
+- SswCase → SswInvoice: この案件の請求 (1:N)
 
 ### ビジネスルール
 
@@ -202,9 +203,13 @@ erDiagram
 
 ---
 
-## Invoice / 請求
+## SswInvoice / 請求
 
 受入れ企業への請求管理。紹介料（一括）と月額支援費（毎月）の2種類。
+
+::: warning 命名について
+`tuition.prisma` に既に `Invoice`/`InvoiceStatus` が存在するため、Prisma の Enum 名衝突回避のため `SswInvoice` という命名にしている。
+:::
 
 | プロパティ | 英語名 | 型 | デフォルト | nullable | unique | 制約・バリデーション |
 |-----------|--------|-----|-----------|----------|--------|---------------------|
@@ -212,20 +217,20 @@ erDiagram
 | 案件ID | caseId | UUID | - | - | - | FK → SswCase |
 | 企業ID | companyId | UUID | - | - | - | FK → Company |
 | 請求番号 | invoiceNumber | String | - | - | o | YYYYMMDD-連番 |
-| 請求種別 | invoiceType | Enum(InvoiceType) | - | - | - | REFERRAL / SUPPORT |
+| 請求種別 | invoiceType | Enum(SswInvoiceType) | - | - | - | REFERRAL / SUPPORT |
 | 金額（税抜） | amount | Int | - | - | - | 円。正の数 |
-| 消費税 | tax | Int | - | - | - | 円。amount の 10% |
+| 消費税 | tax | Int | - | - | - | 円。amount の 10%（端数切捨て） |
 | 発行日 | issueDate | Date | - | - | - | |
 | 支払期日 | dueDate | Date | - | - | - | 翌月末 |
-| ステータス | status | Enum(InvoiceStatus) | DRAFT | - | - | |
+| ステータス | status | Enum(SswInvoiceStatus) | DRAFT | - | - | |
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
 
 ### リレーション
 
-- Invoice → SswCase: 対象案件 (N:1)
-- Invoice → Company: 請求先企業 (N:1)
+- SswInvoice → SswCase: 対象案件 (N:1)
+- SswInvoice → Company: 請求先企業 (N:1)
 
 ### ビジネスルール
 
@@ -289,14 +294,18 @@ erDiagram
 | COMPLETED | 完了 |
 | CANCELLED | 取消 |
 
-### InvoiceType / 請求種別
+### SswInvoiceType / 請求種別
+
+`tuition.prisma` の `InvoiceType` との衝突回避のため `SswInvoiceType` としている。
 
 | 値 | 表示名 | 備考 |
 |----|--------|------|
 | REFERRAL | 紹介料 | 入社時に一括請求。デフォルト 150,000円 |
 | SUPPORT | 登録支援費 | 毎月請求。デフォルト 10,000円 |
 
-### InvoiceStatus / 請求ステータス
+### SswInvoiceStatus / 請求ステータス
+
+`tuition.prisma` の `InvoiceStatus` との衝突回避のため `SswInvoiceStatus` としている。
 
 | 値 | 表示名 | 備考 |
 |----|--------|------|
