@@ -68,15 +68,25 @@ model ImmigrationTask {
   completedAt      DateTime?             @db.Date
   /// 備考
   notes            String?
+  /// 作成者スタッフID
+  createdById      String?               @db.Uuid
+  /// 更新者スタッフID
+  updatedById      String?               @db.Uuid
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 
   /// 対象学生（任意）
   student   Student?              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?                @relation("ImmigrationTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?                @relation("ImmigrationTaskUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// 関連書類 (1:N)
   documents ImmigrationDocument[]
 
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("immigration_tasks")
 }
 
@@ -91,13 +101,23 @@ model ImmigrationDocument {
   collectionStatus ImmigrationCollectionStatus  @default(NOT_COLLECTED)
   /// 備考
   notes            String?
+  /// 作成者スタッフID
+  createdById      String?                     @db.Uuid
+  /// 更新者スタッフID
+  updatedById      String?                     @db.Uuid
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
 
   /// 所属タスク
-  task ImmigrationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task      ImmigrationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?          @relation("ImmigrationDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?          @relation("ImmigrationDocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([taskId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("immigration_documents")
 }
 
@@ -116,8 +136,20 @@ model ScheduledReport {
   completedAt DateTime?           @db.Date
   /// 備考
   notes       String?
+  /// 作成者スタッフID
+  createdById String?             @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?             @db.Uuid
   createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("ScheduledReportCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("ScheduledReportUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([reportType, fiscalYear])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("scheduled_reports")
 }

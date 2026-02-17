@@ -41,15 +41,25 @@ model AttendanceRecord {
   /// 時限（1〜6）
   period    Int
   /// 出欠ステータス
-  status    AttendanceStatus @default(ABSENT)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  status      AttendanceStatus @default(ABSENT)
+  /// 作成者スタッフID
+  createdById String?          @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?          @db.Uuid
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   /// 対象学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("AttendanceRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("AttendanceRecordUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, date, period])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("attendance_records")
 }
 
@@ -72,13 +82,24 @@ model MonthlyAttendanceRate {
   rate           Float
   /// アラートレベル（自動算出）
   alertLevel     AttendanceAlertLevel  @default(NORMAL)
+  /// 作成者スタッフID
+  createdById    String?               @db.Uuid
+  /// 更新者スタッフID
+  updatedById    String?               @db.Uuid
   createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   /// 対象学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("MonthlyAttendanceRateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("MonthlyAttendanceRateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, month])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("monthly_attendance_rates")
 }
 
@@ -97,7 +118,19 @@ model SemiannualAttendanceReport {
   reportStatus ReportStatus   @default(PENDING)
   /// 報告日
   reportedAt   DateTime?      @db.Date
+  /// 作成者スタッフID
+  createdById  String?        @db.Uuid
+  /// 更新者スタッフID
+  updatedById  String?        @db.Uuid
   createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
+  /// 作成者
+  createdBy Staff? @relation("SemiannualAttendanceReportCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("SemiannualAttendanceReportUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([createdById])
+  @@index([updatedById])
   @@map("semiannual_attendance_reports")
 }

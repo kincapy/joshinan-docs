@@ -63,12 +63,22 @@ model JobPosting {
   openings       Int                        @default(1)
   /// 備考
   notes          String?
+  /// 作成者スタッフID
+  createdById    String?                    @db.Uuid
+  /// 更新者スタッフID
+  updatedById    String?                    @db.Uuid
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
 
+  /// 作成者
+  createdBy  Staff? @relation("JobPostingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy  Staff? @relation("JobPostingUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この求人へのマッチング (1:N)
   jobMatches JobMatch[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("job_postings")
 }
 
@@ -89,6 +99,10 @@ model JobMatch {
   offerDate       DateTime?      @db.Date
   /// 備考
   notes           String?
+  /// 作成者スタッフID
+  createdById     String?        @db.Uuid
+  /// 更新者スタッフID
+  updatedById     String?        @db.Uuid
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -96,11 +110,17 @@ model JobMatch {
   jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Restrict)
   /// 対象学生
   student    Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy  Staff?     @relation("JobMatchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy  Staff?     @relation("JobMatchUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 同一学生 × 同一求人の組み合わせは一意
   @@unique([jobPostingId, studentId])
   @@index([jobPostingId])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("job_matches")
 }
 
@@ -121,12 +141,22 @@ model SupportPlan {
   supportDetails      String?
   /// ステータス
   status              SupportPlanStatus @default(ACTIVE)
+  /// 作成者スタッフID
+  createdById         String?           @db.Uuid
+  /// 更新者スタッフID
+  updatedById         String?           @db.Uuid
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
   /// 支援対象の学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?  @relation("SupportPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("SupportPlanUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("support_plans")
 }

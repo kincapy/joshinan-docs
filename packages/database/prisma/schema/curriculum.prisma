@@ -58,12 +58,22 @@ model Subject {
   description String?
   /// 有効フラグ
   isActive    Boolean          @default(true)
+  /// 作成者スタッフID
+  createdById String?          @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?          @db.Uuid
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   /// この科目が割り当てられた時間割枠
   timetableSlots TimetableSlot[]
+  /// 作成者
+  createdBy      Staff?           @relation("SubjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy      Staff?           @relation("SubjectUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("subjects")
 }
 
@@ -78,12 +88,22 @@ model Period {
   endTime      String
   /// 時間帯区分
   timeSlot     TimeSlot
+  /// 作成者スタッフID
+  createdById  String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById  String?  @db.Uuid
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   /// この時限に割り当てられた時間割枠
   timetableSlots TimetableSlot[]
+  /// 作成者
+  createdBy      Staff?           @relation("PeriodCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy      Staff?           @relation("PeriodUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("periods")
 }
 
@@ -103,23 +123,33 @@ model TimetableSlot {
   /// 年度（西暦4桁）
   fiscalYear Int
   /// 学期
-  term       Term
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  term        Term
+  /// 作成者スタッフID
+  createdById String?   @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   /// 所属クラス
-  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
   /// 該当時限
-  period  Period  @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  period    Period  @relation(fields: [periodId], references: [id], onDelete: Restrict)
   /// 割当科目
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   /// 担当教員
-  teacher Staff?  @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  teacher   Staff?  @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?  @relation("TimetableSlotCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("TimetableSlotUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([classId, dayOfWeek, periodId, fiscalYear, term])
   @@index([classId])
   @@index([periodId])
   @@index([subjectId])
   @@index([teacherId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("timetable_slots")
 }
