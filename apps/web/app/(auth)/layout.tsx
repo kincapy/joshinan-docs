@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, GraduationCap, Users, BookOpen, School, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, Users, BookOpen, School, Settings, LogOut, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /** メニュー項目 */
@@ -9,6 +9,7 @@ const menuItems = [
   { title: 'エージェント管理', url: '/agents', icon: Users },
   { title: 'クラス管理', url: '/classes', icon: School },
   { title: 'カリキュラム', url: '/curriculum/subjects', icon: BookOpen },
+  { title: '特定技能', url: '/ssw/cases', icon: Briefcase },
   { title: '設定', url: '/settings/school', icon: Settings },
 ]
 
