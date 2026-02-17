@@ -183,8 +183,8 @@ model Student {
   monthlyBalances      MonthlyBalance[]
   /// 申請ケース (1:N)
   applicationCases     ApplicationCase[]
-  /// マッチング (1:N)
-  jobMatches           JobMatch[]
+  /// 特定技能案件 (1:N)
+  sswCases             SswCase[]
   /// 支援計画 (1:N)
   supportPlans         SupportPlan[]
   /// 入管タスク (1:N)
