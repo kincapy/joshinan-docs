@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import { LayoutDashboard, GraduationCap, LogOut } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-/** メニュー項目（Phase 5以降で追加） */
+/** メニュー項目 */
 const menuItems = [
   { title: 'ダッシュボード', url: '/dashboard', icon: LayoutDashboard },
   { title: '学生管理', url: '/students', icon: GraduationCap },
+  { title: '設定', url: '/settings/school', icon: Settings },
 ]
 
 /**
