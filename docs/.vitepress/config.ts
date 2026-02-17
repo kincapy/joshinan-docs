@@ -156,7 +156,9 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/15-specified-skilled-worker/' },
+                { text: '業務フロー', link: '/01-domain-knowledge/15-specified-skilled-worker/01-work-flow' },
                 { text: 'データ', link: '/01-domain-knowledge/15-specified-skilled-worker/02-data' },
+                { text: '課題', link: '/01-domain-knowledge/15-specified-skilled-worker/03-issues' },
               ],
             },
           ],
