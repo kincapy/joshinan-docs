@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
     const issueMonth = searchParams.get('issueMonth') // YYYY-MM 形式
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (invoiceType) where.invoiceType = invoiceType
     if (status) where.status = status
     if (search) {

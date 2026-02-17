@@ -13,6 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -44,16 +47,23 @@ export default function CompaniesPage() {
 
   const fetchCompanies = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (fieldFilter) params.set('field', fieldFilter)
-    if (search) params.set('search', search)
-    params.set('page', String(page))
+    try {
+      const params = new URLSearchParams()
+      if (fieldFilter) params.set('field', fieldFilter)
+      if (search) params.set('search', search)
+      params.set('page', String(page))
 
-    const res = await fetch(`/api/ssw/companies?${params.toString()}`)
-    const json = await res.json()
-    setCompanies(json.data || [])
-    if (json.pagination) setTotalPages(json.pagination.totalPages)
-    setLoading(false)
+      const res = await fetch(`/api/ssw/companies?${params.toString()}`)
+      if (!res.ok) throw new Error('データの取得に失敗しました')
+      const json = await res.json()
+      setCompanies(json.data || [])
+      if (json.pagination) setTotalPages(json.pagination.totalPages)
+    } catch (err) {
+      console.error(err)
+      setCompanies([])
+    } finally {
+      setLoading(false)
+    }
   }, [fieldFilter, search, page])
 
   useEffect(() => {
@@ -80,8 +90,8 @@ export default function CompaniesPage() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">分野</label>
-              <select
+              <Label className="text-sm text-muted-foreground">分野</Label>
+              <Select
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 value={fieldFilter}
                 onChange={(e) => handleFilterChange(setFieldFilter, e.target.value)}
@@ -90,11 +100,11 @@ export default function CompaniesPage() {
                 {Object.entries(FIELD_LABELS).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">企業名</label>
-              <input
+              <Label className="text-sm text-muted-foreground">企業名</Label>
+              <Input
                 type="text"
                 className="ml-2 rounded border px-2 py-1 text-sm"
                 placeholder="検索..."

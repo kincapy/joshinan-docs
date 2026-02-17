@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/api/auth'
 import { handleApiError } from '@/lib/api/error'
-import { ok, okList } from '@/lib/api/response'
+import { ok, okList, errorResponse } from '@/lib/api/response'
 import { parseBody } from '@/lib/api/validation'
 
 const PER_PAGE = 30
@@ -149,8 +149,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
 
     // フィルタ条件
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (status) where.status = status
     if (field) where.field = field
     if (search) {
@@ -209,7 +208,7 @@ export async function POST(request: NextRequest) {
       select: { nationality: true },
     })
     if (!student) {
-      return ok({ error: '学生が見つかりません' })
+      return errorResponse('学生が見つかりません', 404)
     }
 
     // 必要書類リストを生成

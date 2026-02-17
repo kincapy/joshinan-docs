@@ -103,8 +103,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // 日付フィールドの変換
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = { ...body }
+    const data: Record<string, unknown> = { ...body }
     for (const dateField of ['applicationDate', 'approvalDate', 'entryDate'] as const) {
       if (body[dateField] !== undefined) {
         data[dateField] = body[dateField] ? new Date(body[dateField] as string) : null

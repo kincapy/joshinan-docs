@@ -47,8 +47,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
 
     // フィルタ条件
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (field) where.field = field
     if (search) where.name = { contains: search, mode: 'insensitive' }
 

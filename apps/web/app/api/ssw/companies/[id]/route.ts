@@ -78,8 +78,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await parseBody(request, updateCompanySchema)
 
     // 日付フィールドの変換
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = { ...body }
+    const data: Record<string, unknown> = { ...body }
     if (body.establishedDate !== undefined) {
       data.establishedDate = body.establishedDate
         ? new Date(body.establishedDate)

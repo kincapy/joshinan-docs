@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { ArrowLeft, Pencil } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -108,10 +110,17 @@ export default function CompanyDetailPage() {
 
   const fetchCompany = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/ssw/companies/${companyId}`)
-    const json = await res.json()
-    setCompany(json.data)
-    setLoading(false)
+    try {
+      const res = await fetch(`/api/ssw/companies/${companyId}`)
+      if (!res.ok) throw new Error('データの取得に失敗しました')
+      const json = await res.json()
+      setCompany(json.data)
+    } catch (err) {
+      console.error(err)
+      setCompany(null)
+    } finally {
+      setLoading(false)
+    }
   }, [companyId])
 
   useEffect(() => {
@@ -139,27 +148,32 @@ export default function CompanyDetailPage() {
   async function handleEditSave() {
     setEditSaving(true)
     setEditError('')
-    const res = await fetch(`/api/ssw/companies/${companyId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...editForm,
-        postalCode: editForm.postalCode || null,
-        businessLicense: editForm.businessLicense || null,
-        corporateNumber: editForm.corporateNumber || null,
-        establishedDate: editForm.establishedDate || null,
-        notes: editForm.notes || null,
-      }),
-    })
-    const json = await res.json()
-    if (!res.ok) {
-      setEditError(json.error?.message || '更新に失敗しました')
+    try {
+      const res = await fetch(`/api/ssw/companies/${companyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editForm,
+          postalCode: editForm.postalCode || null,
+          businessLicense: editForm.businessLicense || null,
+          corporateNumber: editForm.corporateNumber || null,
+          establishedDate: editForm.establishedDate || null,
+          notes: editForm.notes || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setEditError(json.error?.message || '更新に失敗しました')
+        return
+      }
+      setEditing(false)
+      fetchCompany()
+    } catch (err) {
+      console.error(err)
+      setEditError('更新に失敗しました')
+    } finally {
       setEditSaving(false)
-      return
     }
-    setEditing(false)
-    setEditSaving(false)
-    fetchCompany()
   }
 
   if (loading) {
@@ -345,8 +359,8 @@ export default function CompanyDetailPage() {
             )}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">企業名</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">企業名</Label>
+                <Input
                   type="text"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.name}
@@ -354,8 +368,8 @@ export default function CompanyDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">代表者名</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">代表者名</Label>
+                <Input
                   type="text"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.representative}
@@ -363,8 +377,8 @@ export default function CompanyDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">電話番号</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">電話番号</Label>
+                <Input
                   type="text"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.phone}
@@ -372,8 +386,8 @@ export default function CompanyDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">所在地</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">所在地</Label>
+                <Input
                   type="text"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.address}

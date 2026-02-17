@@ -258,8 +258,8 @@ describe('POST /api/ssw/cases', () => {
     const response = await POST(request)
     const json = await response.json()
 
-    expect(response.status).toBe(200)
-    expect(json.data.error).toBe('学生が見つかりません')
+    expect(response.status).toBe(404)
+    expect(json.error.message).toBe('学生が見つかりません')
   })
 
   it('不正なUUIDでバリデーションエラー', async () => {

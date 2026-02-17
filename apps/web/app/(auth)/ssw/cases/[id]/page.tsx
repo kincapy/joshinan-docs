@@ -20,6 +20,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Select } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { ArrowLeft, Pencil } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -194,10 +197,17 @@ export default function CaseDetailPage() {
 
   const fetchCase = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/ssw/cases/${caseId}`)
-    const json = await res.json()
-    setCaseData(json.data)
-    setLoading(false)
+    try {
+      const res = await fetch(`/api/ssw/cases/${caseId}`)
+      if (!res.ok) throw new Error('データの取得に失敗しました')
+      const json = await res.json()
+      setCaseData(json.data)
+    } catch (err) {
+      console.error(err)
+      setCaseData(null)
+    } finally {
+      setLoading(false)
+    }
   }, [caseId])
 
   useEffect(() => {
@@ -222,36 +232,47 @@ export default function CaseDetailPage() {
   async function handleEditSave() {
     setEditSaving(true)
     setEditError('')
-    const res = await fetch(`/api/ssw/cases/${caseId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...editForm,
-        applicationDate: editForm.applicationDate || null,
-        approvalDate: editForm.approvalDate || null,
-        entryDate: editForm.entryDate || null,
-        notes: editForm.notes || null,
-      }),
-    })
-    const json = await res.json()
-    if (!res.ok) {
-      setEditError(json.error?.message || '更新に失敗しました')
+    try {
+      const res = await fetch(`/api/ssw/cases/${caseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editForm,
+          applicationDate: editForm.applicationDate || null,
+          approvalDate: editForm.approvalDate || null,
+          entryDate: editForm.entryDate || null,
+          notes: editForm.notes || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setEditError(json.error?.message || '更新に失敗しました')
+        return
+      }
+      setEditing(false)
+      fetchCase()
+    } catch (err) {
+      console.error(err)
+      setEditError('更新に失敗しました')
+    } finally {
       setEditSaving(false)
-      return
     }
-    setEditing(false)
-    setEditSaving(false)
-    fetchCase()
   }
 
   /** 書類ステータスをインラインで更新 */
   async function handleDocStatusChange(docId: string, newStatus: string) {
-    await fetch(`/api/ssw/cases/${caseId}/documents/${docId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
-    fetchCase()
+    try {
+      const res = await fetch(`/api/ssw/cases/${caseId}/documents/${docId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) throw new Error('書類ステータスの更新に失敗しました')
+      fetchCase()
+    } catch (err) {
+      console.error(err)
+      alert('書類ステータスの更新に失敗しました')
+    }
   }
 
   if (loading) {
@@ -495,8 +516,8 @@ export default function CaseDetailPage() {
               </div>
             )}
             <div>
-              <label className="mb-1 block text-sm font-medium">ステータス</label>
-              <select
+              <Label className="mb-1 block text-sm font-medium">ステータス</Label>
+              <Select
                 className="w-full rounded border px-3 py-2 text-sm"
                 value={editForm.status}
                 onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
@@ -504,12 +525,12 @@ export default function CaseDetailPage() {
                 {Object.entries(STATUS_CONFIG).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <label className="mb-1 block text-sm font-medium">申請日</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">申請日</Label>
+                <Input
                   type="date"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.applicationDate}
@@ -517,8 +538,8 @@ export default function CaseDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">許可日</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">許可日</Label>
+                <Input
                   type="date"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.approvalDate}
@@ -526,8 +547,8 @@ export default function CaseDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">入社日</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">入社日</Label>
+                <Input
                   type="date"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.entryDate}
@@ -537,8 +558,8 @@ export default function CaseDetailPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">紹介料（円）</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">紹介料（円）</Label>
+                <Input
                   type="number"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.referralFee}
@@ -546,8 +567,8 @@ export default function CaseDetailPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">月額支援費（円）</label>
-                <input
+                <Label className="mb-1 block text-sm font-medium">月額支援費（円）</Label>
+                <Input
                   type="number"
                   className="w-full rounded border px-3 py-2 text-sm"
                   value={editForm.monthlySupportFee}
@@ -556,7 +577,7 @@ export default function CaseDetailPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">備考</label>
+              <Label className="mb-1 block text-sm font-medium">備考</Label>
               <textarea
                 className="w-full rounded border px-3 py-2 text-sm"
                 rows={3}
