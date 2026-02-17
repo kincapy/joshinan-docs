@@ -3,7 +3,7 @@
 ## Overview
 
 常南国際学院の業務ナレッジ・システム仕様・タスク管理のドキュメントサイト。
-現在は VitePress による静的ドキュメントサイト。将来 NestJS + Next.js + Prisma でシステム開発予定。
+VitePress による静的ドキュメントサイトと、Next.js + Prisma の業務アプリが同一リポジトリに同居するモノレポ構成。
 
 ## Directory Map
 
@@ -12,8 +12,10 @@
   - `02-system-specification/` — システム仕様
   - `03-tasks/` — タスク管理
   - `.vitepress/config.ts` — サイドバー・ナビゲーション設定
+- `apps/web/` — Next.js 業務アプリ（Supabase Auth + Prisma）
+- `packages/database/` — Prisma スキーマ・DB 層
+- `packages/domain/` — ドメイン層（Entity, ValueObject）
 - `scripts/` — ユーティリティスクリプト（Playwright クローラー等）
-- `middleware.ts` — Vercel Edge Middleware（Basic認証）
 
 ## Setup
 
@@ -55,6 +57,22 @@ npm run preview  # プレビュー
 
 このプロジェクトでは `docs/.vitepress/config.ts` にサイドバーを直接記述している。
 ファイルやディレクトリを追加・削除・リネームした場合は、`config.ts` のサイドバー定義も手動で更新すること。
+
+## Vercel デプロイ構成
+
+このリポジトリには **2つの Vercel プロジェクト** が紐づいている。`vercel.json` は存在しない（ダッシュボード設定で管理）。
+
+| Vercel プロジェクト | URL | 用途 | Root Directory |
+|---|---|---|---|
+| joshinan-docs | joshinan-docs.vercel.app | VitePress ドキュメント | (なし=ルート) |
+| joshinan-app | joshinan-app.vercel.app | Next.js 業務アプリ | `apps/web` |
+
+### 注意事項
+
+- **vercel.json を作成しないこと** — 2プロジェクトの設定が競合する。ビルド設定は全てダッシュボード側で管理
+- **Hobby プランの同時ビルド制限** — main に push すると両プロジェクトのビルドが走るが、同時に1つしかビルドできない。片方が Canceled になることがある。その場合は Vercel ダッシュボードから手動で Redeploy する
+- **手動デプロイ方法** — `vercel --prod --yes`（`.vercel/project.json` のリンク先プロジェクトにデプロイされる）
+- **DB スキーマ変更時** — `prisma migrate diff` で SQL 生成 → Supabase SQL Editor で手動実行（直接接続は IPv4/IPv6 問題で不可）
 
 ## Post-Implementation Checklist (MANDATORY)
 
