@@ -306,6 +306,15 @@ export default defineConfig({
                 { text: 'UIUX定義', link: '/02-system-specification/15-specified-skilled-worker/02-uiux' },
               ],
             },
+            {
+              text: '16 チャットボット',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/16-chatbot/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/16-chatbot/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/16-chatbot/02-uiux' },
+              ],
+            },
           ],
         },
       ],
