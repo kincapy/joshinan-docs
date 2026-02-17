@@ -4,7 +4,7 @@ import { ok } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/error'
 import { requireAuth } from '@/lib/api/auth'
 
-/** GET /api/staffs — 教職員一覧（時間割用） */
+/** GET /api/staff/simple — 教職員一覧（時間割用の簡易版。id/name/role/isActive のみ） */
 export async function GET(request: NextRequest) {
   try {
     await requireAuth()

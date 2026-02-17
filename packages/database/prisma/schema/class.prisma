@@ -41,14 +41,24 @@ model Class {
   startDate   DateTime  @db.Date
   /// 終了日
   endDate     DateTime  @db.Date
+  /// 作成者スタッフID
+  createdById String?   @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?   @db.Uuid
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  /// 作成者
+  createdBy Staff? @relation("ClassCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("ClassUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// クラスに所属する学生
   classEnrollments ClassEnrollment[]
   /// クラスの時間割
   timetableSlots   TimetableSlot[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("classes")
 }
 
@@ -65,6 +75,10 @@ model ClassEnrollment {
   startDate      DateTime       @db.Date
   /// 在籍終了日（null = 在籍中）
   endDate        DateTime?      @db.Date
+  /// 作成者スタッフID
+  createdById    String?        @db.Uuid
+  /// 更新者スタッフID
+  updatedById    String?        @db.Uuid
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -72,9 +86,15 @@ model ClassEnrollment {
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// 所属クラス
   class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff? @relation("ClassEnrollmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("ClassEnrollmentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, classId, enrollmentType, startDate])
   @@index([studentId])
   @@index([classId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("class_enrollments")
 }

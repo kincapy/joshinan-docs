@@ -25,12 +25,22 @@ model BillingItem {
   displayOrder Int      @default(0)
   /// 有効フラグ
   isActive     Boolean  @default(true)
+  /// 作成者スタッフID
+  createdById  String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById  String?  @db.Uuid
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  /// 作成者
+  createdBy Staff? @relation("BillingItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("BillingItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この品目で作成された請求
   invoices Invoice[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("billing_items")
 }
 
@@ -49,6 +59,10 @@ model Invoice {
   status        InvoiceStatus @default(ISSUED)
   /// 備考
   notes         String?
+  /// 作成者スタッフID
+  createdById   String?       @db.Uuid
+  /// 更新者スタッフID
+  updatedById   String?       @db.Uuid
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -56,11 +70,17 @@ model Invoice {
   student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// 請求品目
   billingItem BillingItem @relation(fields: [billingItemId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy   Staff?      @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy   Staff?      @relation("InvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この請求への入金
   payments    Payment[]
 
   @@index([studentId])
   @@index([billingItemId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("invoices")
 }
 
@@ -79,16 +99,26 @@ model Payment {
   invoiceId   String?       @db.Uuid
   /// 備考
   notes       String?
+  /// 作成者スタッフID
+  createdById String?       @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?       @db.Uuid
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   /// 入金した学生
-  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// 消込対象の請求
-  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?   @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?   @relation("PaymentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
   @@index([invoiceId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("payments")
 }
 
@@ -107,12 +137,23 @@ model MonthlyBalance {
   monthlyPayment  Decimal  @default(0)
   /// 当月末残高（自動算出: previousBalance + monthlyCharge - monthlyPayment）
   balance         Decimal  @default(0)
+  /// 作成者スタッフID
+  createdById     String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById     String?  @db.Uuid
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   /// 対象学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("MonthlyBalanceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("MonthlyBalanceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, month])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("monthly_balances")
 }

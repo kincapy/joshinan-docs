@@ -59,8 +59,21 @@ model Staff {
   maxWeeklyLessons Int?
   /// 有効フラグ（退職時に false）
   isActive         Boolean         @default(true)
+  /// 作成者スタッフID
+  createdById      String?         @db.Uuid
+  /// 更新者スタッフID
+  updatedById      String?         @db.Uuid
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+
+  /// 作成者（自己参照）
+  createdBy Staff? @relation("StaffCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者（自己参照）
+  updatedBy Staff? @relation("StaffUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  /// 自身が作成した Staff レコード
+  createdStaffs Staff[] @relation("StaffCreatedBy")
+  /// 自身が更新した Staff レコード
+  updatedStaffs Staff[] @relation("StaffUpdatedBy")
 
   /// 保有資格 (1:N)
   qualifications     TeacherQualification[]
@@ -73,6 +86,129 @@ model Staff {
   /// 出迎え担当の学生 (1:N)
   pickupStudents     Student[]              @relation("PickupStaff")
 
+  /// --- 監査フィールド逆リレーション ---
+  /// School
+  createdSchools              School[]              @relation("SchoolCreatedBy")
+  updatedSchools              School[]              @relation("SchoolUpdatedBy")
+  /// EnrollmentPeriod
+  createdEnrollmentPeriods    EnrollmentPeriod[]    @relation("EnrollmentPeriodCreatedBy")
+  updatedEnrollmentPeriods    EnrollmentPeriod[]    @relation("EnrollmentPeriodUpdatedBy")
+  /// TeacherQualification
+  createdTeacherQualifications TeacherQualification[] @relation("TeacherQualificationCreatedBy")
+  updatedTeacherQualifications TeacherQualification[] @relation("TeacherQualificationUpdatedBy")
+  /// Student
+  createdStudents             Student[]             @relation("StudentCreatedBy")
+  updatedStudents             Student[]             @relation("StudentUpdatedBy")
+  /// StudentEmployment
+  createdStudentEmployments   StudentEmployment[]   @relation("StudentEmploymentCreatedBy")
+  updatedStudentEmployments   StudentEmployment[]   @relation("StudentEmploymentUpdatedBy")
+  /// InterviewRecord
+  createdInterviewRecords     InterviewRecord[]     @relation("InterviewRecordCreatedBy")
+  updatedInterviewRecords     InterviewRecord[]     @relation("InterviewRecordUpdatedBy")
+  /// StudentCertification
+  createdStudentCertifications StudentCertification[] @relation("StudentCertificationCreatedBy")
+  updatedStudentCertifications StudentCertification[] @relation("StudentCertificationUpdatedBy")
+  /// Class
+  createdClasses              Class[]               @relation("ClassCreatedBy")
+  updatedClasses              Class[]               @relation("ClassUpdatedBy")
+  /// ClassEnrollment
+  createdClassEnrollments     ClassEnrollment[]     @relation("ClassEnrollmentCreatedBy")
+  updatedClassEnrollments     ClassEnrollment[]     @relation("ClassEnrollmentUpdatedBy")
+  /// Subject
+  createdSubjects             Subject[]             @relation("SubjectCreatedBy")
+  updatedSubjects             Subject[]             @relation("SubjectUpdatedBy")
+  /// Period
+  createdPeriods              Period[]              @relation("PeriodCreatedBy")
+  updatedPeriods              Period[]              @relation("PeriodUpdatedBy")
+  /// TimetableSlot
+  createdTimetableSlots       TimetableSlot[]       @relation("TimetableSlotCreatedBy")
+  updatedTimetableSlots       TimetableSlot[]       @relation("TimetableSlotUpdatedBy")
+  /// AttendanceRecord
+  createdAttendanceRecords    AttendanceRecord[]    @relation("AttendanceRecordCreatedBy")
+  updatedAttendanceRecords    AttendanceRecord[]    @relation("AttendanceRecordUpdatedBy")
+  /// MonthlyAttendanceRate
+  createdMonthlyAttendanceRates MonthlyAttendanceRate[] @relation("MonthlyAttendanceRateCreatedBy")
+  updatedMonthlyAttendanceRates MonthlyAttendanceRate[] @relation("MonthlyAttendanceRateUpdatedBy")
+  /// SemiannualAttendanceReport
+  createdSemiannualAttendanceReports SemiannualAttendanceReport[] @relation("SemiannualAttendanceReportCreatedBy")
+  updatedSemiannualAttendanceReports SemiannualAttendanceReport[] @relation("SemiannualAttendanceReportUpdatedBy")
+  /// BillingItem
+  createdBillingItems         BillingItem[]         @relation("BillingItemCreatedBy")
+  updatedBillingItems         BillingItem[]         @relation("BillingItemUpdatedBy")
+  /// Invoice
+  createdInvoices             Invoice[]             @relation("InvoiceCreatedBy")
+  updatedInvoices             Invoice[]             @relation("InvoiceUpdatedBy")
+  /// Payment
+  createdPayments             Payment[]             @relation("PaymentCreatedBy")
+  updatedPayments             Payment[]             @relation("PaymentUpdatedBy")
+  /// MonthlyBalance
+  createdMonthlyBalances      MonthlyBalance[]      @relation("MonthlyBalanceCreatedBy")
+  updatedMonthlyBalances      MonthlyBalance[]      @relation("MonthlyBalanceUpdatedBy")
+  /// Agent
+  createdAgents               Agent[]               @relation("AgentCreatedBy")
+  updatedAgents               Agent[]               @relation("AgentUpdatedBy")
+  /// AgentAlias
+  createdAgentAliases         AgentAlias[]          @relation("AgentAliasCreatedBy")
+  updatedAgentAliases         AgentAlias[]          @relation("AgentAliasUpdatedBy")
+  /// AgentInvoice
+  createdAgentInvoices        AgentInvoice[]        @relation("AgentInvoiceCreatedBy")
+  updatedAgentInvoices        AgentInvoice[]        @relation("AgentInvoiceUpdatedBy")
+  /// AgentPayment
+  createdAgentPayments        AgentPayment[]        @relation("AgentPaymentCreatedBy")
+  updatedAgentPayments        AgentPayment[]        @relation("AgentPaymentUpdatedBy")
+  /// Dormitory
+  createdDormitories          Dormitory[]           @relation("DormitoryCreatedBy")
+  updatedDormitories          Dormitory[]           @relation("DormitoryUpdatedBy")
+  /// DormitoryAssignment
+  createdDormitoryAssignments DormitoryAssignment[] @relation("DormitoryAssignmentCreatedBy")
+  updatedDormitoryAssignments DormitoryAssignment[] @relation("DormitoryAssignmentUpdatedBy")
+  /// DormitoryUtility
+  createdDormitoryUtilities   DormitoryUtility[]    @relation("DormitoryUtilityCreatedBy")
+  updatedDormitoryUtilities   DormitoryUtility[]    @relation("DormitoryUtilityUpdatedBy")
+  /// WifiDevice
+  createdWifiDevices          WifiDevice[]          @relation("WifiDeviceCreatedBy")
+  updatedWifiDevices          WifiDevice[]          @relation("WifiDeviceUpdatedBy")
+  /// ImmigrationTask
+  createdImmigrationTasks     ImmigrationTask[]     @relation("ImmigrationTaskCreatedBy")
+  updatedImmigrationTasks     ImmigrationTask[]     @relation("ImmigrationTaskUpdatedBy")
+  /// ImmigrationDocument
+  createdImmigrationDocuments ImmigrationDocument[] @relation("ImmigrationDocumentCreatedBy")
+  updatedImmigrationDocuments ImmigrationDocument[] @relation("ImmigrationDocumentUpdatedBy")
+  /// ScheduledReport
+  createdScheduledReports     ScheduledReport[]     @relation("ScheduledReportCreatedBy")
+  updatedScheduledReports     ScheduledReport[]     @relation("ScheduledReportUpdatedBy")
+  /// DocumentTemplate
+  createdDocumentTemplates    DocumentTemplate[]    @relation("DocumentTemplateCreatedBy")
+  updatedDocumentTemplates    DocumentTemplate[]    @relation("DocumentTemplateUpdatedBy")
+  /// RecruitmentCycle
+  createdRecruitmentCycles    RecruitmentCycle[]    @relation("RecruitmentCycleCreatedBy")
+  updatedRecruitmentCycles    RecruitmentCycle[]    @relation("RecruitmentCycleUpdatedBy")
+  /// ApplicationCase
+  createdApplicationCases     ApplicationCase[]     @relation("ApplicationCaseCreatedBy")
+  updatedApplicationCases     ApplicationCase[]     @relation("ApplicationCaseUpdatedBy")
+  /// ApplicationDocument
+  createdApplicationDocuments ApplicationDocument[] @relation("ApplicationDocumentCreatedBy")
+  updatedApplicationDocuments ApplicationDocument[] @relation("ApplicationDocumentUpdatedBy")
+  /// DocumentCheckResult
+  createdDocumentCheckResults DocumentCheckResult[] @relation("DocumentCheckResultCreatedBy")
+  /// Company
+  createdCompanies            Company[]             @relation("CompanyCreatedBy")
+  updatedCompanies            Company[]             @relation("CompanyUpdatedBy")
+  /// SswCase
+  createdSswCases             SswCase[]             @relation("SswCaseCreatedBy")
+  updatedSswCases             SswCase[]             @relation("SswCaseUpdatedBy")
+  /// CaseDocument
+  createdCaseDocuments        CaseDocument[]        @relation("CaseDocumentCreatedBy")
+  updatedCaseDocuments        CaseDocument[]        @relation("CaseDocumentUpdatedBy")
+  /// SupportPlan
+  createdSupportPlans         SupportPlan[]         @relation("SupportPlanCreatedBy")
+  updatedSupportPlans         SupportPlan[]         @relation("SupportPlanUpdatedBy")
+  /// SswInvoice
+  createdSswInvoices          SswInvoice[]          @relation("SswInvoiceCreatedBy")
+  updatedSswInvoices          SswInvoice[]          @relation("SswInvoiceUpdatedBy")
+
+  @@index([createdById])
+  @@index([updatedById])
   @@map("staffs")
 }
 
@@ -89,12 +225,22 @@ model TeacherQualification {
   expirationDate    DateTime?         @db.Date
   /// 備考
   notes             String?
+  /// 作成者スタッフID
+  createdById       String?           @db.Uuid
+  /// 更新者スタッフID
+  updatedById       String?           @db.Uuid
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   /// 所属教職員
-  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  staff     Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff? @relation("TeacherQualificationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("TeacherQualificationUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([staffId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("teacher_qualifications")
 }

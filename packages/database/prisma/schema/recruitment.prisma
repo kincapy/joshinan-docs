@@ -63,13 +63,23 @@ model RecruitmentCycle {
   entryStartDate      DateTime?       @db.Date
   /// 募集目標人数
   targetCount         Int
+  /// 作成者スタッフID
+  createdById         String?         @db.Uuid
+  /// 更新者スタッフID
+  updatedById         String?         @db.Uuid
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
   /// この募集期の申請ケース (1:N)
   applicationCases ApplicationCase[]
+  /// 作成者
+  createdBy        Staff?           @relation("RecruitmentCycleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy        Staff?           @relation("RecruitmentCycleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([enrollmentMonth, fiscalYear])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("recruitment_cycles")
 }
 
@@ -98,6 +108,10 @@ model ApplicationCase {
   studentId          String?           @db.Uuid
   /// 備考
   notes              String?
+  /// 作成者スタッフID
+  createdById        String?           @db.Uuid
+  /// 更新者スタッフID
+  updatedById        String?           @db.Uuid
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
@@ -109,10 +123,16 @@ model ApplicationCase {
   student          Student?             @relation(fields: [studentId], references: [id], onDelete: Restrict)
   /// この申請の書類 (1:N)
   documents        ApplicationDocument[]
+  /// 作成者
+  createdBy        Staff?               @relation("ApplicationCaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy        Staff?               @relation("ApplicationCaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([recruitmentCycleId])
   @@index([agentId])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("application_cases")
 }
 
@@ -131,6 +151,10 @@ model ApplicationDocument {
   hasJapaneseTranslation Boolean                     @default(false)
   /// 備考（不備内容など）
   notes                  String?
+  /// 作成者スタッフID
+  createdById            String?                     @db.Uuid
+  /// 更新者スタッフID
+  updatedById            String?                     @db.Uuid
   createdAt              DateTime                    @default(now())
   updatedAt              DateTime                    @updatedAt
 
@@ -138,8 +162,14 @@ model ApplicationDocument {
   applicationCase ApplicationCase      @relation(fields: [applicationCaseId], references: [id], onDelete: Cascade)
   /// この書類のチェック結果 (1:N)
   checkResults    DocumentCheckResult[]
+  /// 作成者
+  createdBy       Staff?               @relation("ApplicationDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy       Staff?               @relation("ApplicationDocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([applicationCaseId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("application_documents")
 }
 
@@ -154,11 +184,16 @@ model DocumentCheckResult {
   result                CheckResult
   /// 指摘事項（NG の場合の具体的な指摘内容）
   findings              String?
+  /// 作成者スタッフID
+  createdById           String?     @db.Uuid
   createdAt             DateTime    @default(now())
 
   /// 対象書類
   applicationDocument ApplicationDocument @relation(fields: [applicationDocumentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy           Staff?               @relation("DocumentCheckResultCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([applicationDocumentId])
+  @@index([createdById])
   @@map("document_check_results")
 }

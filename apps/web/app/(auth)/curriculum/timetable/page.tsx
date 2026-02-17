@@ -93,7 +93,7 @@ export default function TimetablePage() {
           fetch('/api/classes'),
           fetch('/api/periods'),
           fetch('/api/subjects?isActive=true&per=200'),
-          fetch('/api/staffs?isActive=true'),
+          fetch('/api/staff/simple?isActive=true'),
         ])
 
         const classJson = await classRes.json()

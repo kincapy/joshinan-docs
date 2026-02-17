@@ -153,6 +153,10 @@ model Student {
   withdrawalReason       String?
   /// 備考
   notes                  String?
+  /// 作成者スタッフID
+  createdById            String?              @db.Uuid
+  /// 更新者スタッフID
+  updatedById            String?              @db.Uuid
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
 
@@ -160,6 +164,10 @@ model Student {
   agent       Agent? @relation(fields: [agentId], references: [id], onDelete: Restrict)
   /// 出迎え担当スタッフ (N:1)
   pickupStaff Staff? @relation("PickupStaff", fields: [pickupStaffId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy   Staff? @relation("StudentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy   Staff? @relation("StudentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 勤務先情報 (1:N, 最大3件)
   employments          StudentEmployment[]
@@ -192,6 +200,8 @@ model Student {
 
   @@index([agentId])
   @@index([pickupStaffId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("students")
 }
 
@@ -208,13 +218,23 @@ model StudentEmployment {
   weeklyHours  Float?
   /// 時給（円）
   hourlyWage   Int?
+  /// 作成者スタッフID
+  createdById  String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById  String?  @db.Uuid
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   /// 所属学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("StudentEmploymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("StudentEmploymentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("student_employments")
 }
 
@@ -233,16 +253,26 @@ model InterviewRecord {
   content       String
   /// アクション項目
   actionItems   String?
+  /// 作成者スタッフID
+  createdById   String?       @db.Uuid
+  /// 更新者スタッフID
+  updatedById   String?       @db.Uuid
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   /// 対象学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// 担当者
-  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?  @relation("InterviewRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("InterviewRecordUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
   @@index([staffId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("interview_records")
 }
 
@@ -265,12 +295,22 @@ model StudentCertification {
   certificateNumber String?
   /// 備考
   notes             String?
+  /// 作成者スタッフID
+  createdById       String?    @db.Uuid
+  /// 更新者スタッフID
+  updatedById       String?    @db.Uuid
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
   /// 対象学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("StudentCertificationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("StudentCertificationUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("student_certifications")
 }

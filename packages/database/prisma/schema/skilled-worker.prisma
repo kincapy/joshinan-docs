@@ -59,7 +59,7 @@ enum SswInvoiceStatus {
 
 /// 受入れ企業
 model Company {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// 企業名
   name            String
   /// 代表者名
@@ -75,19 +75,29 @@ model Company {
   /// 営業許可（旅館業許可等。分野により必要）
   businessLicense String?
   /// 法人番号（13桁）
-  corporateNumber String?  @unique
+  corporateNumber String?   @unique
   /// 設立年月日
   establishedDate DateTime? @db.Date
   /// 備考
   notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  /// 作成者スタッフID
+  createdById     String?   @db.Uuid
+  /// 更新者スタッフID
+  updatedById     String?   @db.Uuid
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
+  /// 作成者
+  createdBy   Staff?       @relation("CompanyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy   Staff?       @relation("CompanyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この企業の案件 (1:N)
   sswCases    SswCase[]
   /// この企業への請求 (1:N)
   sswInvoices SswInvoice[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("companies")
 }
 
@@ -114,9 +124,17 @@ model SswCase {
   monthlySupportFee Int        @default(10000)
   /// 備考
   notes             String?
+  /// 作成者スタッフID
+  createdById       String?    @db.Uuid
+  /// 更新者スタッフID
+  updatedById       String?    @db.Uuid
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
+  /// 作成者
+  createdBy   Staff?         @relation("SswCaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy   Staff?         @relation("SswCaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// 受入れ企業
   company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
   /// 対象学生
@@ -132,6 +150,8 @@ model SswCase {
   @@unique([companyId, studentId])
   @@index([companyId])
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("ssw_cases")
 }
 
@@ -154,42 +174,62 @@ model CaseDocument {
   skipReason   String?
   /// 備考
   notes        String?
+  /// 作成者スタッフID
+  createdById  String?        @db.Uuid
+  /// 更新者スタッフID
+  updatedById  String?        @db.Uuid
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
   /// 所属案件
-  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  sswCase   SswCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?  @relation("CaseDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("CaseDocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 同一案件内で同一書類コードは一意
   @@unique([caseId, documentCode])
   @@index([caseId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("case_documents")
 }
 
 /// 支援計画（特定技能外国人への義務的支援計画）
 model SupportPlan {
-  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// 案件ID
-  caseId    String            @unique @db.Uuid
+  caseId      String            @unique @db.Uuid
   /// 学生ID
-  studentId String            @db.Uuid
+  studentId   String            @db.Uuid
   /// 支援開始日
-  startDate DateTime          @db.Date
+  startDate   DateTime          @db.Date
   /// 支援終了日（継続中の場合は null）
-  endDate   DateTime?         @db.Date
+  endDate     DateTime?         @db.Date
   /// ステータス
-  status    SupportPlanStatus @default(ACTIVE)
+  status      SupportPlanStatus @default(ACTIVE)
   /// 備考
-  notes     String?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  notes       String?
+  /// 作成者スタッフID
+  createdById String?           @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?           @db.Uuid
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   /// 対象案件
-  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  sswCase   SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
   /// 支援対象の学生
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?  @relation("SupportPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("SupportPlanUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([studentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("support_plans")
 }
 
@@ -216,15 +256,25 @@ model SswInvoice {
   status        SswInvoiceStatus @default(DRAFT)
   /// 備考
   notes         String?
+  /// 作成者スタッフID
+  createdById   String?          @db.Uuid
+  /// 更新者スタッフID
+  updatedById   String?          @db.Uuid
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   /// 対象案件
-  sswCase SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  sswCase   SswCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
   /// 請求先企業
-  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?  @relation("SswInvoiceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?  @relation("SswInvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@index([caseId])
   @@index([companyId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("ssw_invoices")
 }

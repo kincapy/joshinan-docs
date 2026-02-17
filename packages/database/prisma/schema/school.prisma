@@ -49,12 +49,23 @@ model School {
   establishedDate    DateTime           @db.Date
   /// 有効フラグ（論理削除用）
   isActive           Boolean            @default(true)
+  /// 作成者スタッフID
+  createdById        String?            @db.Uuid
+  /// 更新者スタッフID
+  updatedById        String?            @db.Uuid
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("SchoolCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("SchoolUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 入学時期マスタ
   enrollmentPeriods EnrollmentPeriod[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("schools")
 }
 
@@ -71,13 +82,23 @@ model EnrollmentPeriod {
   fiscalYear          Int
   /// 募集定員
   recruitmentCapacity Int
+  /// 作成者スタッフID
+  createdById         String?         @db.Uuid
+  /// 更新者スタッフID
+  updatedById         String?         @db.Uuid
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
   /// 所属学校
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school    School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff? @relation("EnrollmentPeriodCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("EnrollmentPeriodUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   @@unique([schoolId, enrollmentMonth, fiscalYear])
   @@index([schoolId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("enrollment_periods")
 }

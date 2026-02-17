@@ -33,8 +33,17 @@ model Agent {
   notes         String?
   /// 有効フラグ
   isActive      Boolean   @default(true)
+  /// 作成者スタッフID
+  createdById   String?   @db.Uuid
+  /// 更新者スタッフID
+  updatedById   String?   @db.Uuid
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("AgentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("AgentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// このエージェント経由の学生
   students         Student[]
@@ -45,6 +54,8 @@ model Agent {
   /// このエージェント経由の申請ケース
   applicationCases ApplicationCase[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("agents")
 }
 
@@ -54,13 +65,25 @@ model AgentAlias {
   /// エージェントID
   agentId   String   @db.Uuid
   /// 別名（請求書・契約書に記載される法人名等）
-  aliasName String   @unique
-  createdAt DateTime @default(now())
+  aliasName   String   @unique
+  /// 作成者スタッフID
+  createdById String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("AgentAliasCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("AgentAliasUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 所属エージェント
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([agentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("agent_aliases")
 }
 
@@ -79,8 +102,17 @@ model AgentInvoice {
   status        AgentInvoiceStatus @default(UNPAID)
   /// 備考
   notes         String?
+  /// 作成者スタッフID
+  createdById   String?            @db.Uuid
+  /// 更新者スタッフID
+  updatedById   String?            @db.Uuid
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("AgentInvoiceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("AgentInvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 請求元エージェント
   agent    Agent          @relation(fields: [agentId], references: [id], onDelete: Restrict)
@@ -88,6 +120,8 @@ model AgentInvoice {
   payments AgentPayment[]
 
   @@index([agentId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("agent_invoices")
 }
 
@@ -104,12 +138,23 @@ model AgentPayment {
   amount         Decimal
   /// 備考
   notes          String?
+  /// 作成者スタッフID
+  createdById    String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById    String?  @db.Uuid
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("AgentPaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("AgentPaymentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 
   /// 対象請求書
   agentInvoice AgentInvoice @relation(fields: [agentInvoiceId], references: [id], onDelete: Cascade)
 
   @@index([agentInvoiceId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("agent_payments")
 }

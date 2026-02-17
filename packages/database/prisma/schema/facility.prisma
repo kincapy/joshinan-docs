@@ -33,14 +33,24 @@ model Dormitory {
   isActive                 Boolean  @default(true)
   /// 備考
   notes                    String?
+  /// 作成者スタッフID
+  createdById              String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById              String?  @db.Uuid
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
+  /// 作成者
+  createdBy   Staff?               @relation("DormitoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy   Staff?               @relation("DormitoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この寮に入居した学生の履歴
   assignments DormitoryAssignment[]
   /// この寮の月次水光熱費
   utilities   DormitoryUtility[]
 
+  @@index([createdById])
+  @@index([updatedById])
   @@map("dormitories")
 }
 
@@ -57,8 +67,17 @@ model DormitoryAssignment {
   moveInDate  DateTime         @db.Date
   /// 退寮日（null = 未退寮）
   moveOutDate DateTime?        @db.Date
+  /// 作成者スタッフID
+  createdById String?          @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?          @db.Uuid
   createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
+  /// 作成者
+  createdBy Staff?    @relation("DormitoryAssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?    @relation("DormitoryAssignmentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// 入居学生
   student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// 入居先
@@ -66,6 +85,8 @@ model DormitoryAssignment {
 
   @@index([studentId])
   @@index([dormitoryId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("dormitory_assignments")
 }
 
@@ -82,14 +103,24 @@ model DormitoryUtility {
   gas         Decimal  @default(0)
   /// 水道代（円）
   water       Decimal  @default(0)
+  /// 作成者スタッフID
+  createdById String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?  @db.Uuid
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  /// 作成者
+  createdBy Staff?    @relation("DormitoryUtilityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?    @relation("DormitoryUtilityUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// 対象物件
   dormitory Dormitory @relation(fields: [dormitoryId], references: [id], onDelete: Cascade)
 
   @@unique([dormitoryId, month])
   @@index([dormitoryId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("dormitory_utilities")
 }
 
@@ -106,8 +137,19 @@ model WifiDevice {
   isActive       Boolean  @default(true)
   /// 備考
   notes          String?
+  /// 作成者スタッフID
+  createdById    String?  @db.Uuid
+  /// 更新者スタッフID
+  updatedById    String?  @db.Uuid
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  /// 作成者
+  createdBy Staff? @relation("WifiDeviceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("WifiDeviceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([createdById])
+  @@index([updatedById])
   @@map("wifi_devices")
 }
