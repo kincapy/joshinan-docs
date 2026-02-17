@@ -71,6 +71,66 @@ export function createMockPrisma() {
       update: vi.fn(),
       count: vi.fn(),
     },
+    // チャットボット機能
+    chatSession: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    chatMessage: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+    },
+    chatApproval: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    // 決裁テーブル（Prisma モデル名: ApprovalRequest）
+    approvalRequest: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    // プロジェクト機能
+    skill: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    project: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    projectTask: {
+      findMany: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
+    },
+    projectMember: {
+      findMany: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    $transaction: vi.fn(),
   }
 }
 
