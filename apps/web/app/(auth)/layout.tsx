@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, GraduationCap, Users, BookOpen, School, ClipboardCheck, Wallet, Building2, FileText, UserPlus, FileOutput, Briefcase, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, Users, BookOpen, School, ClipboardCheck, Wallet, Building2, FileText, UserPlus, FileOutput, Briefcase, Settings, LogOut, MessageSquare, FolderKanban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /** メニュー項目 */
@@ -16,6 +16,8 @@ const menuItems = [
   { title: '募集管理', url: '/recruitment', icon: UserPlus },
   { title: '特定技能', url: '/ssw/cases', icon: Briefcase },
   { title: '社内文書', url: '/documents', icon: FileOutput },
+  { title: 'チャット', url: '/chat', icon: MessageSquare },
+  { title: 'プロジェクト', url: '/projects', icon: FolderKanban },
   { title: '設定', url: '/settings/school', icon: Settings },
 ]
 

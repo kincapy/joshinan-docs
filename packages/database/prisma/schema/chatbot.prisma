@@ -1,0 +1,142 @@
+/// =============================================
+/// チャットボット機能 (16-chatbot)
+/// =============================================
+
+/// ユーザーロール（チャットボット・プロジェクト共通の権限体系）
+enum UserRole {
+  GENERAL  /// 一般ユーザー — ナレッジ回答・データ照会のみ
+  ADMIN    /// 管理者 — データ変更・ナレッジ更新申請が可能
+  APPROVER /// 決裁者 — 承認/却下の権限を持つ
+}
+
+/// メッセージ送信者
+enum MessageRole {
+  USER      /// ユーザーの発言
+  ASSISTANT /// AIの応答
+  SYSTEM    /// システムメッセージ（確認ステップ、決裁結果通知など）
+}
+
+/// 監査アクション
+enum AuditAction {
+  CREATE           /// レコードの新規作成
+  UPDATE           /// レコードの更新
+  DELETE           /// レコードの削除
+  KNOWLEDGE_UPDATE /// ナレッジ（Markdown）の更新
+}
+
+/// 決裁種別
+enum ApprovalType {
+  DATA_CHANGE      /// データ変更の決裁
+  KNOWLEDGE_UPDATE /// ナレッジ更新の決裁
+}
+
+/// 決裁ステータス
+enum ApprovalStatus {
+  PENDING  /// 承認待ち
+  APPROVED /// 承認済み
+  REJECTED /// 却下
+}
+
+/// チャットセッション（1つの会話スレッド）
+model ChatSession {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Supabase Auth の UID（ログインユーザー）
+  userId    String   @db.Uuid
+  /// セッションのタイトル（最初の質問から自動生成）
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// このセッションのメッセージ (1:N)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+/// チャットメッセージ（セッション内の個々のメッセージ）
+model ChatMessage {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 所属セッション
+  sessionId   String      @db.Uuid
+  /// 送信者の種別
+  role        MessageRole
+  /// メッセージ本文
+  content     String
+  /// Claude API の Tool Use 呼び出し内容
+  toolCalls   Json?
+  /// Tool Use の実行結果
+  toolResults Json?
+  createdAt   DateTime    @default(now())
+
+  /// 所属セッション
+  session          ChatSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  /// このメッセージがトリガーした監査ログ (1:N)
+  auditLogs        AuditLog[]
+  /// このメッセージがトリガーした決裁申請 (1:N)
+  approvalRequests ApprovalRequest[]
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+/// 監査ログ（全テーブル共通の変更履歴）
+model AuditLog {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 操作したユーザー（Supabase Auth UID）
+  userId    String      @db.Uuid
+  /// チャットボット経由の場合、トリガーとなったメッセージ
+  messageId String?     @db.Uuid
+  /// 操作種別
+  action    AuditAction
+  /// 対象テーブル名（ナレッジ更新の場合はファイルパス）
+  tableName String
+  /// 対象レコードID
+  recordId  String?
+  /// 変更したフィールド名
+  fieldName String?
+  /// 変更前の値
+  oldValue  Json?
+  /// 変更後の値
+  newValue  Json?
+  createdAt DateTime    @default(now())
+
+  /// トリガーとなったメッセージ
+  message ChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([messageId])
+  @@index([tableName, recordId])
+  @@map("audit_logs")
+}
+
+/// 決裁申請（データ変更・ナレッジ更新の承認依頼）
+model ApprovalRequest {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 申請者（Supabase Auth UID）
+  requesterId  String         @db.Uuid
+  /// 決裁者（Supabase Auth UID。未割当ての場合は NULL）
+  approverId   String?        @db.Uuid
+  /// 申請のトリガーとなったメッセージ
+  messageId    String         @db.Uuid
+  /// 決裁種別
+  type         ApprovalType
+  /// 決裁ステータス
+  status       ApprovalStatus @default(PENDING)
+  /// 変更内容の詳細（変更前後の値など）
+  changeDetail Json
+  /// 却下理由
+  reason       String?
+  createdAt    DateTime       @default(now())
+  /// 承認/却下日時
+  resolvedAt   DateTime?
+
+  /// トリガーとなったメッセージ
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Restrict)
+
+  @@index([requesterId])
+  @@index([approverId])
+  @@index([messageId])
+  @@index([status])
+  @@map("approval_requests")
+}
