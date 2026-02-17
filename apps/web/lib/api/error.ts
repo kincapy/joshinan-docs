@@ -16,13 +16,13 @@ export function handleApiError(error: unknown): NextResponse {
     )
   }
 
-  // Prisma ユニーク制約違反 → 409
+  // Prisma ユニーク制約違反 → 409、レコード未検出 → 404
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2002') {
+    const prismaError = error as Prisma.PrismaClientKnownRequestError
+    if (prismaError.code === 'P2002') {
       return errorResponse('既に存在するデータです', 409)
     }
-    // レコード未検出 → 404
-    if (error.code === 'P2025') {
+    if (prismaError.code === 'P2025') {
       return errorResponse('データが見つかりません', 404)
     }
   }
