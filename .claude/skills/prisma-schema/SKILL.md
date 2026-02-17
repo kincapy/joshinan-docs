@@ -1,141 +1,131 @@
 ---
 name: prisma-schema
-description: Guide for Prisma schema definition, migrations, and database patterns in apps/api. Use when creating models, relations, enums, indexes, or running migrations for PostgreSQL database.
+description: Prisma スキーマ定義のガイド。packages/database 配下のモデル定義・マイグレーション方針・命名規則を定義。新しいテーブルの追加やスキーマ変更時に参照する。
 ---
 
-# Prisma Schema Guide
+# Prisma スキーマガイド
 
-## Architecture
+## When to Use
+
+- 新しいテーブル（モデル）を追加するとき
+- 既存テーブルの構造を変更するとき
+- マイグレーション方針を確認したいとき
+
+## ディレクトリ構成
 
 ```
-apps/api/src/infrastructure/prisma/
-├── schema/                    # Multi-file schema
-│   ├── schema.prisma          # Generator + datasource config
-│   ├── {feature}.prisma       # Feature-specific models
-│   └── master-data.prisma     # Master data models
-├── migrations/                # Manual migration files
-├── prisma.service.ts          # Prisma client service
-├── error-mapping.ts           # prismaError() utility
-└── extensions/
-    └── pagination.extension.ts
+packages/database/
+├── prisma/
+│   ├── schema/                    # マルチファイルスキーマ
+│   │   ├── schema.prisma          # generator + datasource 設定
+│   │   ├── school.prisma          # 学校基本情報
+│   │   ├── student.prisma         # 学生管理
+│   │   ├── curriculum.prisma      # カリキュラム
+│   │   ├── class.prisma           # クラス編成
+│   │   ├── attendance.prisma      # 出席管理
+│   │   ├── tuition.prisma         # 学費管理
+│   │   ├── agent.prisma           # エージェント管理
+│   │   ├── facility.prisma        # 施設・備品管理
+│   │   ├── staff.prisma           # 教職員管理
+│   │   ├── immigration.prisma     # 入管報告
+│   │   ├── document.prisma        # 社内文書
+│   │   ├── recruitment.prisma     # 募集業務
+│   │   └── skilled-worker.prisma  # 特定技能
+│   └── migrations/                # マイグレーションファイル
+├── src/
+│   └── index.ts                   # PrismaClient の re-export
+└── package.json
 ```
 
-## Model Conventions
+## モデル定義規則
 
 ```prisma
-/// リソースの説明（日本語）
+/// リソースの日本語説明
 model Resource {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   name       String                         /// 名前
-  status     ResourceStatus @default(draft) /// ステータス
+  status     ResourceStatus @default(DRAFT) /// ステータス
   startDate  DateTime @db.Date              /// 開始日
   memo       String?                        /// メモ
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // リレーション
   items      ResourceItem[]
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  customerId String    @db.Uuid
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  schoolId   String   @db.Uuid
 
-  @@unique([code])
-  @@index([customerId])
-  @@map("resources")   // Always snake_case
+  @@index([schoolId])
+  @@map("resources")
 }
 ```
 
-**Rules:**
-- ID: Always UUID with `@default(dbgenerated("gen_random_uuid()"))` — never autoincrement
-- Field comments: Use `/// 日本語` doc comments
-- `@@map("snake_case_table_name")` is required on every model
-- `@@index` on every FK column
-- Date-only fields: `DateTime @db.Date`
-- `onDelete`: `Cascade` for owned children, `Restrict` for referenced masters
+### 必須ルール
 
-## Migration Policy (MANDATORY)
+| 項目 | 規則 |
+|------|------|
+| ID | UUID `@default(dbgenerated("gen_random_uuid()"))` — autoincrement は使わない |
+| コメント | `///` で日本語ドキュメントコメント |
+| テーブル名 | `@@map("snake_case")` を必ず付ける |
+| FK インデックス | `@@index([foreignKeyId])` を FK ごとに付ける |
+| 日付のみ | `DateTime @db.Date` |
+| 削除制約 | 子テーブル: `Cascade`、マスタ参照: `Restrict` |
+| タイムスタンプ | `createdAt` + `updatedAt` を全モデルに付ける |
 
-### Pre-Production: Edit Existing Migrations
+## Enum 定義
 
-**This project has NOT launched to production.** The DB can always be reset.
+```prisma
+enum ResourceStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
 
-- **DO NOT** create ALTER TABLE / ADD COLUMN migrations for existing tables
-- **Instead**, edit the original migration file, then `make db-reset`
-
-| Scenario | Action |
-|----------|--------|
-| Modify existing table (add/remove/rename column, index, constraint) | **Edit** the original migration |
-| Add new enum value | **Edit** the migration that defined the enum |
-| Create an entirely new table | **Create** a new migration file |
-
-### AI Agent Workflow
-
-**NEVER** use `prisma migrate dev` or `make db-migrate-create`. Always create/edit migration SQL manually.
-
-**Steps for new tables:**
-1. Edit `.prisma` schema files
-2. Create migration directory: `YYYYMMDDHHMMSS_{description}/migration.sql`
-3. Write CREATE TABLE / CREATE TYPE SQL manually
-4. `make db-migrate` → `make db-generate`
-
-**Steps for modifying existing tables:**
-1. Edit `.prisma` schema files
-2. Edit the existing `migration.sql` that created the table
-3. `make db-reset` → `make db-generate` → `make db-seed`
-
-### Migration Granularity
-
-Split by logical unit — never pack everything into one migration.
-
-| Unit | Content | Example |
-|------|---------|---------|
-| Main entity | Primary table + enums | `booking` |
-| Sub-entities | 1:1 child tables | `booking_sub_entities` |
-| Auxiliary | Comments, files | `booking_comment` |
-| Audit | History tables | `booking_operation_history` |
-
-Use sequential timestamps to express FK dependency order.
-
-### Naming Convention
-
-Format: `YYYYMMDDHHMMSS_{description}` (e.g., `20260207000016_booking`)
-
-## Error Handling
-
-Use `prismaError()` from `infrastructure/prisma/error-mapping`:
-
-```typescript
-import { prismaError } from '../../../infrastructure/prisma/error-mapping'
-
-return await this.prisma.resource
-  .create({ data })
-  .catch((err) => {
-    throw prismaError(err, {
-      UniqueConstraint: { code: 'Code already exists' },
-      ForeignKeyConstraint: 'Customer not found',
-    })
-  })
+  @@map("resource_status")
+}
 ```
 
-For `findUniqueOrThrow`, map `NotFoundException`.
+## マイグレーション方針
 
-## Seed Data
+### 本番未稼働: 既存マイグレーションを編集
 
-Location: `apps/api/src/interfaces/cli/seed/`
+このプロジェクトは**まだ本番稼働していない**。DBはいつでもリセット可能。
 
-**Rules:**
-- File: `XX.{feature}.seed.ts` (sequential numbering for dependency order)
-- Function: `seed{Model}(prisma: PrismaService)` — no return value
-- Fetch related records with `findFirstOrThrow` inside the seed
-- Use realistic Japanese sample data
-- Register in `seed/index.ts` (call in dependency order)
+- 既存テーブルの変更 → **既存のマイグレーション SQL を直接編集**
+- 新しいテーブルの追加 → **新しいマイグレーションファイルを作成**
 
-## Implementation Checklist
+### Supabase 環境でのマイグレーション
 
-1. [ ] Create/update `schema/{feature}.prisma`
-2. [ ] Add `@@map`, `@@index`, proper relations
-3. [ ] Create or edit migration SQL (follow Migration Policy above)
-4. [ ] `make db-migrate` (or `make db-reset` if editing existing migration)
-5. [ ] `make db-generate`
-6. [ ] Update domain entity in `packages/domain`
-7. [ ] Create seed file and register in `seed/index.ts`
+ローカル DB に直接接続できない（IPv4/IPv6 問題）ため、以下の手順を使う：
+
+1. `.prisma` スキーマファイルを編集
+2. `npx prisma migrate diff` で SQL を生成
+3. Supabase SQL Editor で手動実行
+
+### AI エージェントのワークフロー
+
+`prisma migrate dev` は**使わない**。手動で SQL を書く。
+
+**新しいテーブルの場合:**
+1. `.prisma` スキーマファイルを編集
+2. マイグレーションディレクトリ作成: `YYYYMMDDHHMMSS_{description}/migration.sql`
+3. CREATE TABLE / CREATE TYPE SQL を手書き
+4. `npx prisma generate` で Client を再生成
+
+**既存テーブルの変更:**
+1. `.prisma` スキーマファイルを編集
+2. 元のマイグレーション SQL を直接編集
+3. DB リセットが必要な場合はユーザーに確認
+
+## 既存スキーマとの整合性
+
+**全カテゴリの Prisma スキーマは定義済み。** 新しいカテゴリの実装時に DB スキーマを一から書く必要はない。既存の `.prisma` ファイルを確認してから API/フロントエンドを実装すること。
+
+## 実装チェックリスト
+
+1. [ ] `packages/database/prisma/schema/{feature}.prisma` を確認（既存なら読む、新規なら作成）
+2. [ ] `@@map`, `@@index`, リレーション、日本語コメントを確認
+3. [ ] 必要ならマイグレーション SQL を作成・編集
+4. [ ] `npx prisma generate` で Client を再生成
+5. [ ] `@joshinan/domain` の VO と Prisma Enum が一致していることを確認
