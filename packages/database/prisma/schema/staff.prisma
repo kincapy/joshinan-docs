@@ -1,0 +1,100 @@
+/// =============================================
+/// 教職員管理 (09-staff-management)
+/// =============================================
+
+/// 役職
+enum StaffRole {
+  PRINCIPAL            /// 校長
+  HEAD_TEACHER         /// 教務主任
+  FULL_TIME_TEACHER    /// 常勤講師
+  PART_TIME_TEACHER    /// 非常勤講師
+  LIFE_COUNSELOR       /// 生活指導員
+  ADMINISTRATIVE_STAFF /// 事務担当
+  MANAGEMENT           /// 経営者
+}
+
+/// 雇用形態
+enum EmploymentType {
+  FULL_TIME /// 常勤
+  PART_TIME /// 非常勤
+  CONTRACT  /// パート
+}
+
+/// 給与形態
+enum PayType {
+  MONTHLY_SALARY /// 月給
+  HOURLY_WAGE    /// 時給+授業手当
+  PER_LESSON     /// コマ給
+}
+
+/// 資格種別
+enum QualificationType {
+  MAJOR              /// 主専攻（日本語教育を主専攻として大学・大学院卒）
+  MINOR              /// 副専攻（日本語教育を副専攻として大学・大学院卒）
+  TRAINING_420H      /// 420時間養成講座
+  CERTIFICATION_EXAM /// 検定合格（日本語教育能力検定試験）
+  REGISTERED_TEACHER /// 登録日本語教師（国家資格）
+}
+
+/// 教職員
+model Staff {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 氏名
+  name             String
+  /// メールアドレス
+  email            String?         @unique
+  /// 電話番号
+  phone            String?
+  /// 役職
+  role             StaffRole
+  /// 雇用形態
+  employmentType   EmploymentType
+  /// 入社日
+  hireDate         DateTime        @db.Date
+  /// 退職日
+  resignationDate  DateTime?       @db.Date
+  /// 給与形態（非常勤の場合に設定）
+  payType          PayType?
+  /// 週間コマ数上限（常勤: 25、非常勤: null）
+  maxWeeklyLessons Int?
+  /// 有効フラグ（退職時に false）
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  /// 保有資格 (1:N)
+  qualifications     TeacherQualification[]
+  /// 担当時間割枠 (1:N)
+  timetableSlots     TimetableSlot[]
+  /// 作成した文書 (1:N)
+  generatedDocuments GeneratedDocument[]
+  /// 担当した面談 (1:N)
+  interviewRecords   InterviewRecord[]
+  /// 出迎え担当の学生 (1:N)
+  pickupStudents     Student[]              @relation("PickupStaff")
+
+  @@map("staffs")
+}
+
+/// 教員資格
+model TeacherQualification {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 教職員ID
+  staffId           String            @db.Uuid
+  /// 資格種別
+  qualificationType QualificationType
+  /// 取得日
+  acquiredDate      DateTime?         @db.Date
+  /// 有効期限（登録日本語教師の場合に該当）
+  expirationDate    DateTime?         @db.Date
+  /// 備考
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  /// 所属教職員
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@map("teacher_qualifications")
+}

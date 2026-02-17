@@ -1,0 +1,80 @@
+/// =============================================
+/// クラス編成 (04-class-assignment)
+/// =============================================
+
+/// CEFRレベル
+enum CefrLevel {
+  A1 /// A1
+  A2 /// A2
+  B1 /// B1
+  B2 /// B2
+  C1 /// C1
+  C2 /// C2
+}
+
+/// 在籍タイプ
+enum EnrollmentType {
+  REGULAR   /// 通常（正規のクラス所属）
+  SUB_CLASS /// サブクラス（補習・特別授業への一時的な所属）
+}
+
+/// クラス
+model Class {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// クラス名
+  name        String
+  /// 印刷用名称（証明書等に印刷される名称）
+  printName   String?
+  /// JLPTレベル
+  jlptLevel   JlptLevel?
+  /// CEFRレベル
+  cefrLevel   CefrLevel?
+  /// 時間帯区分（午前/午後）
+  timeSlot    TimeSlot
+  /// サブクラスフラグ（true の場合、一時的なクラス）
+  isSubClass  Boolean   @default(false)
+  /// 最大人数（告示基準に基づく上限）
+  maxStudents Int       @default(20)
+  /// 年度（西暦4桁）
+  fiscalYear  Int
+  /// 開始日
+  startDate   DateTime  @db.Date
+  /// 終了日
+  endDate     DateTime  @db.Date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  /// クラスに所属する学生
+  classEnrollments ClassEnrollment[]
+  /// クラスの時間割
+  timetableSlots   TimetableSlot[]
+
+  @@map("classes")
+}
+
+/// クラス在籍（学生のクラスへの所属を管理）
+model ClassEnrollment {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId      String         @db.Uuid
+  /// クラスID
+  classId        String         @db.Uuid
+  /// 在籍タイプ（通常/サブクラス）
+  enrollmentType EnrollmentType @default(REGULAR)
+  /// 在籍開始日
+  startDate      DateTime       @db.Date
+  /// 在籍終了日（null = 在籍中）
+  endDate        DateTime?      @db.Date
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  /// 所属学生
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 所属クラス
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId, enrollmentType, startDate])
+  @@index([studentId])
+  @@index([classId])
+  @@map("class_enrollments")
+}

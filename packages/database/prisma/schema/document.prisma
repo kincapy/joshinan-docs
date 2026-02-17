@@ -1,0 +1,52 @@
+/// =============================================
+/// 社内文書 (12-internal-documents)
+/// =============================================
+
+/// 出力形式
+enum OutputFormat {
+  EXCEL /// Excel
+  DOCX  /// Word
+}
+
+/// 文書テンプレート
+model DocumentTemplate {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 文書名
+  name         String       @unique
+  /// 出力形式
+  outputFormat OutputFormat
+  /// 説明
+  description  String?
+  /// 有効フラグ
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  /// このテンプレートから生成された文書 (1:N)
+  generatedDocuments GeneratedDocument[]
+
+  @@map("document_templates")
+}
+
+/// 生成済み文書
+model GeneratedDocument {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// テンプレートID
+  templateId  String   @db.Uuid
+  /// 作成者スタッフID
+  createdById String   @db.Uuid
+  /// 生成されたファイルの保存先
+  filePath    String
+  /// 備考
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  /// 元テンプレート
+  template  DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([templateId])
+  @@index([createdById])
+  @@map("generated_documents")
+}

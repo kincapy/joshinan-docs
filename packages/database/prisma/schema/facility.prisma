@@ -1,0 +1,113 @@
+/// =============================================
+/// 施設・備品管理 (08-facility-management)
+/// =============================================
+
+/// 入寮ステータス
+enum AssignmentStatus {
+  ACTIVE /// 入居中（寮費請求対象）
+  ENDED  /// 退寮済み（履歴として保持）
+}
+
+/// 寮（物件）
+model Dormitory {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 物件名（正規化後の名称）
+  name                     String   @unique
+  /// 住所
+  address                  String
+  /// 家賃（月額、円）
+  rent                     Decimal
+  /// ガス契約先
+  gasProvider              String?
+  /// ガス契約番号
+  gasContractNumber        String?
+  /// 水道契約先
+  waterProvider            String?
+  /// 水道契約番号
+  waterContractNumber      String?
+  /// 電気契約先
+  electricityProvider      String?
+  /// 電気契約番号
+  electricityContractNumber String?
+  /// 有効フラグ
+  isActive                 Boolean  @default(true)
+  /// 備考
+  notes                    String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  /// この寮に入居した学生の履歴
+  assignments DormitoryAssignment[]
+  /// この寮の月次水光熱費
+  utilities   DormitoryUtility[]
+
+  @@map("dormitories")
+}
+
+/// 入寮履歴（学生と寮の紐付け。入退寮の履歴管理）
+model DormitoryAssignment {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 学生ID
+  studentId   String           @db.Uuid
+  /// 寮ID
+  dormitoryId String           @db.Uuid
+  /// ステータス
+  status      AssignmentStatus @default(ACTIVE)
+  /// 入寮日
+  moveInDate  DateTime         @db.Date
+  /// 退寮日（null = 未退寮）
+  moveOutDate DateTime?        @db.Date
+  createdAt   DateTime         @default(now())
+
+  /// 入居学生
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 入居先
+  dormitory Dormitory @relation(fields: [dormitoryId], references: [id], onDelete: Restrict)
+
+  @@index([studentId])
+  @@index([dormitoryId])
+  @@map("dormitory_assignments")
+}
+
+/// 寮水光熱費（物件ごとの月次水光熱費レコード）
+model DormitoryUtility {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 寮ID
+  dormitoryId String   @db.Uuid
+  /// 対象年月（YYYY-MM 形式）
+  month       String
+  /// 電気代（円）
+  electricity Decimal  @default(0)
+  /// ガス代（円）
+  gas         Decimal  @default(0)
+  /// 水道代（円）
+  water       Decimal  @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// 対象物件
+  dormitory Dormitory @relation(fields: [dormitoryId], references: [id], onDelete: Cascade)
+
+  @@unique([dormitoryId, month])
+  @@index([dormitoryId])
+  @@map("dormitory_utilities")
+}
+
+/// WiFiデバイス（配置・契約管理）
+model WifiDevice {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// IMEI（デバイスの一意識別子）
+  imei           String   @unique
+  /// 配置場所
+  location       String
+  /// 契約番号
+  contractNumber String?
+  /// 有効フラグ
+  isActive       Boolean  @default(true)
+  /// 備考
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("wifi_devices")
+}
