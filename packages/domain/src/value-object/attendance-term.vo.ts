@@ -9,8 +9,8 @@ type AttendanceTerm = z.infer<typeof schema>
 
 /** 出席率報告期間の日本語ラベル */
 const labelMap: Record<AttendanceTerm, string> = {
-  FIRST_HALF: '前期（4月〜9月）',
-  SECOND_HALF: '後期（10月〜3月）',
+  FIRST_HALF: '前期',
+  SECOND_HALF: '後期',
 } as const
 
 /** セレクトボックス用選択肢 */

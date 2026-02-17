@@ -191,15 +191,21 @@ model Staff {
   updatedApplicationDocuments ApplicationDocument[] @relation("ApplicationDocumentUpdatedBy")
   /// DocumentCheckResult
   createdDocumentCheckResults DocumentCheckResult[] @relation("DocumentCheckResultCreatedBy")
-  /// JobPosting
-  createdJobPostings          JobPosting[]          @relation("JobPostingCreatedBy")
-  updatedJobPostings          JobPosting[]          @relation("JobPostingUpdatedBy")
-  /// JobMatch
-  createdJobMatches           JobMatch[]            @relation("JobMatchCreatedBy")
-  updatedJobMatches           JobMatch[]            @relation("JobMatchUpdatedBy")
+  /// Company
+  createdCompanies            Company[]             @relation("CompanyCreatedBy")
+  updatedCompanies            Company[]             @relation("CompanyUpdatedBy")
+  /// SswCase
+  createdSswCases             SswCase[]             @relation("SswCaseCreatedBy")
+  updatedSswCases             SswCase[]             @relation("SswCaseUpdatedBy")
+  /// CaseDocument
+  createdCaseDocuments        CaseDocument[]        @relation("CaseDocumentCreatedBy")
+  updatedCaseDocuments        CaseDocument[]        @relation("CaseDocumentUpdatedBy")
   /// SupportPlan
   createdSupportPlans         SupportPlan[]         @relation("SupportPlanCreatedBy")
   updatedSupportPlans         SupportPlan[]         @relation("SupportPlanUpdatedBy")
+  /// SswInvoice
+  createdSswInvoices          SswInvoice[]          @relation("SswInvoiceCreatedBy")
+  updatedSswInvoices          SswInvoice[]          @relation("SswInvoiceUpdatedBy")
 
   @@index([createdById])
   @@index([updatedById])

@@ -141,14 +141,20 @@ ALTER TABLE "application_documents" ADD COLUMN "updatedById" UUID REFERENCES "st
 ALTER TABLE "document_check_results" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
 
 -- 15-specified-skilled-worker
-ALTER TABLE "job_postings" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
-ALTER TABLE "job_postings" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "companies" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "companies" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
 
-ALTER TABLE "job_matches" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
-ALTER TABLE "job_matches" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "ssw_cases" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "ssw_cases" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+
+ALTER TABLE "case_documents" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "case_documents" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
 
 ALTER TABLE "support_plans" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
 ALTER TABLE "support_plans" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+
+ALTER TABLE "ssw_invoices" ADD COLUMN "createdById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
+ALTER TABLE "ssw_invoices" ADD COLUMN "updatedById" UUID REFERENCES "staffs"("id") ON DELETE RESTRICT;
 
 -- =============================================
 -- 3. インデックスの追加
@@ -225,9 +231,13 @@ CREATE INDEX "application_cases_updatedById_idx" ON "application_cases"("updated
 CREATE INDEX "application_documents_createdById_idx" ON "application_documents"("createdById");
 CREATE INDEX "application_documents_updatedById_idx" ON "application_documents"("updatedById");
 CREATE INDEX "document_check_results_createdById_idx" ON "document_check_results"("createdById");
-CREATE INDEX "job_postings_createdById_idx" ON "job_postings"("createdById");
-CREATE INDEX "job_postings_updatedById_idx" ON "job_postings"("updatedById");
-CREATE INDEX "job_matches_createdById_idx" ON "job_matches"("createdById");
-CREATE INDEX "job_matches_updatedById_idx" ON "job_matches"("updatedById");
+CREATE INDEX "companies_createdById_idx" ON "companies"("createdById");
+CREATE INDEX "companies_updatedById_idx" ON "companies"("updatedById");
+CREATE INDEX "ssw_cases_createdById_idx" ON "ssw_cases"("createdById");
+CREATE INDEX "ssw_cases_updatedById_idx" ON "ssw_cases"("updatedById");
+CREATE INDEX "case_documents_createdById_idx" ON "case_documents"("createdById");
+CREATE INDEX "case_documents_updatedById_idx" ON "case_documents"("updatedById");
 CREATE INDEX "support_plans_createdById_idx" ON "support_plans"("createdById");
 CREATE INDEX "support_plans_updatedById_idx" ON "support_plans"("updatedById");
+CREATE INDEX "ssw_invoices_createdById_idx" ON "ssw_invoices"("createdById");
+CREATE INDEX "ssw_invoices_updatedById_idx" ON "ssw_invoices"("updatedById");

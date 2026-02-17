@@ -24,11 +24,15 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
 - Dormitory → DormitoryAssignment: この寮に入居した学生の履歴 (1:N)
 - Dormitory → DormitoryUtility: この寮の月次水光熱費 (1:N)
+- Dormitory → Staff: 作成者 (N:1, createdById)
+- Dormitory → Staff: 更新者 (N:1, updatedById)
 
 ---
 
@@ -45,11 +49,16 @@ title: エンティティ定義
 | 入寮日 | moveInDate | Date | - | - | - | |
 | 退寮日 | moveOutDate | Date | - | o | - | null = 未退寮 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
 - DormitoryAssignment → Student: 入居学生 (N:1)
 - DormitoryAssignment → Dormitory: 入居先 (N:1)
+- DormitoryAssignment → Staff: 作成者 (N:1, createdById)
+- DormitoryAssignment → Staff: 更新者 (N:1, updatedById)
 
 ### ビジネスルール
 
@@ -74,10 +83,14 @@ title: エンティティ定義
 | 水道代 | water | Decimal | 0 | - | - | 円 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
 - DormitoryUtility → Dormitory: 対象物件 (N:1)
+- DormitoryUtility → Staff: 作成者 (N:1, createdById)
+- DormitoryUtility → Staff: 更新者 (N:1, updatedById)
 
 ### 複合ユニーク制約
 
@@ -103,6 +116,7 @@ WiFiデバイスの配置・契約管理。
 | プロパティ | 英語名 | 型 | デフォルト | nullable | unique | 制約・バリデーション |
 |-----------|--------|-----|-----------|----------|--------|---------------------|
 | ID | id | UUID | auto | - | o | PK |
+| デバイス名 | name | String | - | - | - | |
 | IMEI | imei | String | - | - | o | デバイスの一意識別子 |
 | 配置場所 | location | String | - | - | - | |
 | 契約番号 | contractNumber | String | - | o | - | |
@@ -110,3 +124,10 @@ WiFiデバイスの配置・契約管理。
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
+
+### リレーション
+
+- WifiDevice → Staff: 作成者 (N:1, createdById)
+- WifiDevice → Staff: 更新者 (N:1, updatedById)

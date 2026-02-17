@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {}
     if (roleFilter) where.role = roleFilter
     if (employmentTypeFilter) where.employmentType = employmentTypeFilter
-    if (isActiveFilter !== null) {
+    if (isActiveFilter !== null && isActiveFilter !== '') {
       where.isActive = isActiveFilter === 'true'
     }
     if (search) {

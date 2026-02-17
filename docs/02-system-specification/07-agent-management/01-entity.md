@@ -20,6 +20,8 @@ title: エンティティ定義
 | 有効フラグ | isActive | Boolean | true | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -39,6 +41,9 @@ title: エンティティ定義
 | エージェントID | agentId | UUID | - | - | - | FK → Agent |
 | 別名 | aliasName | String | - | - | o | 請求書・契約書に記載される法人名等 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -65,6 +70,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -87,6 +94,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
