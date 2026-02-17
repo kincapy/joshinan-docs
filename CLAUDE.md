@@ -115,3 +115,14 @@ npm run preview  # プレビュー
 1. **Verification** — 以下のコマンドを実行し、問題があれば修正する:
    - `npm run build` — VitePress ビルドが通ることを確認
 2. **Documentation Sync** — `docs/` 配下の関連ドキュメントを同期する。`/docs-maintenance` スキルを参照。
+
+## セッション完了時のワークフロー（MANDATORY）
+
+実装が完了してユーザーに完了報告をした後、**必ず** 以下を順番に実行すること。
+ユーザーが「引き継ぎ出して」「/handover」「PRしてマージしてhandover」等と言ったら、まとめて実行する。
+
+1. **PR 作成** — `gh pr create` で PR を作成する（未作成の場合）
+2. **マージ** — `gh pr merge` でマージする
+3. **引き継ぎドキュメント作成** — `~/.claude/HANDOVER_TEMPLATE.md` のフォーマットに従って作成
+   - **保存先**: メインリポジトリ（`/Users/eiji/joshinan-docs/`）に置くこと（worktree ではない）
+   - **ファイル名**: `HANDOVER_JOSHINAN_YYYYMMDD_{topic}.md`
