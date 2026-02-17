@@ -1,0 +1,275 @@
+/// =============================================
+/// プロジェクト機能 (18-project)
+/// =============================================
+
+/// タスクカテゴリ
+enum TaskCategory {
+  DOCUMENT_CREATION  /// 書類作成（当社が作成する書類）
+  DOCUMENT_COLLECTION /// 書類収集（外部から収集する書類）
+  DATA_ENTRY         /// データ入力
+  REVIEW             /// 確認・レビュー
+  OUTPUT             /// 成果物の出力
+}
+
+/// タスクのアクション種別
+enum TaskActionType {
+  FILE_UPLOAD    /// ファイルアップロード
+  FORM_INPUT     /// フォーム入力
+  AUTO_GENERATE  /// 自動生成（DBデータから書類を生成）
+  MANUAL_CHECK   /// 手動確認
+}
+
+/// 条件分岐演算子
+enum ConditionOperator {
+  EQUALS     /// 一致
+  NOT_EQUALS /// 不一致
+  IN         /// いずれかに一致
+  IS_TRUE    /// true
+  IS_FALSE   /// false
+}
+
+/// プロジェクトステータス
+enum ProjectStatus {
+  ACTIVE    /// 進行中
+  COMPLETED /// 完了
+  SUSPENDED /// 中断
+  CANCELLED /// 取消
+}
+
+/// タスクステータス
+enum ProjectTaskStatus {
+  NOT_STARTED  /// 未着手
+  IN_PROGRESS  /// 対応中
+  COMPLETED    /// 完了
+  NOT_REQUIRED /// 不要（条件分岐で免除）
+  RETURNED     /// 差戻し
+}
+
+/// プロジェクト内の権限
+enum ProjectRole {
+  OWNER  /// オーナー。全操作 + 権限設定
+  EDITOR /// 編集者。タスク操作が可能
+  VIEWER /// 閲覧者。進捗の閲覧のみ
+}
+
+/// スキル定義（業務パターンのテンプレート）
+model Skill {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// スキル名（例: 特定技能申請）
+  name                String
+  /// スキルの説明
+  description         String?
+  /// 目的（例: 特定技能の在留資格変更許可申請）
+  purpose             String
+  /// 完了条件（例: 入管への申請書類を提出）
+  goal                String
+  /// ワークフローの定義（ステップ・順序・条件）
+  workflowDefinition  Json
+  /// バージョン番号
+  version             Int     @default(1)
+  /// 有効/無効
+  isActive            Boolean @default(true)
+  /// 作成者スタッフID
+  createdById         String? @db.Uuid
+  /// 更新者スタッフID
+  updatedById         String? @db.Uuid
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  /// 作成者
+  createdBy Staff? @relation("SkillCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff? @relation("SkillUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  /// このスキルのタスクテンプレート (1:N)
+  taskTemplates SkillTaskTemplate[]
+  /// このスキルの条件分岐ルール (1:N)
+  conditionRules SkillConditionRule[]
+  /// このスキルのプロジェクト (1:N)
+  projects Project[]
+
+  @@index([createdById])
+  @@index([updatedById])
+  @@map("skills")
+}
+
+/// タスクテンプレート（スキル内のタスクの雛形）
+model SkillTaskTemplate {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 所属スキル
+  skillId         String         @db.Uuid
+  /// タスクコード（例: DOC-001, COL-012）
+  taskCode        String
+  /// タスク名（例: 在留資格変更許可申請書）
+  taskName        String
+  /// 詳細説明・注意事項
+  description     String?
+  /// カテゴリ
+  category        TaskCategory
+  /// アクション種別
+  actionType      TaskActionType
+  /// デフォルトで必須かどうか
+  defaultRequired Boolean        @default(true)
+  /// 表示順序
+  sortOrder       Int
+  /// 作成者スタッフID
+  createdById     String?        @db.Uuid
+  /// 更新者スタッフID
+  updatedById     String?        @db.Uuid
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  /// 所属スキル
+  skill     Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  /// 作成者
+  createdBy Staff?        @relation("SkillTaskTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?        @relation("SkillTaskTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  /// このテンプレートから生成されたタスク (1:N)
+  projectTasks ProjectTask[]
+
+  /// 同一スキル内でタスクコードは一意
+  @@unique([skillId, taskCode])
+  @@index([skillId])
+  @@index([createdById])
+  @@index([updatedById])
+  @@map("skill_task_templates")
+}
+
+/// 条件分岐ルール（タスクの必要/不要を判定）
+model SkillConditionRule {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 所属スキル
+  skillId        String            @db.Uuid
+  /// 対象タスクコード
+  taskCode       String
+  /// 判定に使うフィールド（例: nationality, sswField）
+  conditionField String
+  /// 演算子
+  operator       ConditionOperator
+  /// 条件値（例: NURSING_CARE, true）
+  conditionValue String
+  /// 条件に一致した場合の必須/不要
+  resultRequired Boolean
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  /// 所属スキル
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+  @@index([taskCode])
+  @@map("skill_condition_rules")
+}
+
+/// プロジェクト（スキルのインスタンス。具体的な案件の進行管理）
+model Project {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 使用するスキル
+  skillId     String        @db.Uuid
+  /// プロジェクト開始者（Supabase Auth UID）
+  ownerId     String        @db.Uuid
+  /// プロジェクト名（例: 田中太郎の特定技能申請）
+  name        String
+  /// ステータス
+  status      ProjectStatus @default(ACTIVE)
+  /// プロジェクト固有のデータ（対象学生ID、企業ID等）
+  contextData Json
+  /// 開始日時
+  startedAt   DateTime      @default(now())
+  /// 完了日時
+  completedAt DateTime?
+  /// 作成者スタッフID
+  createdById String?       @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?       @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  /// 使用するスキル
+  skill     Skill           @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?          @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?          @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  /// このプロジェクトのタスク (1:N)
+  tasks     ProjectTask[]
+  /// このプロジェクトのメンバー (1:N)
+  members   ProjectMember[]
+
+  @@index([skillId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdById])
+  @@index([updatedById])
+  @@map("projects")
+}
+
+/// プロジェクトタスク（テンプレートから生成された個々のタスク）
+model ProjectTask {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 所属プロジェクト
+  projectId   String            @db.Uuid
+  /// 生成元のテンプレート
+  templateId  String            @db.Uuid
+  /// タスクコード
+  taskCode    String
+  /// タスク名
+  taskName    String
+  /// ステータス
+  status      ProjectTaskStatus @default(NOT_STARTED)
+  /// 必須かどうか（条件分岐で判定済み）
+  required    Boolean           @default(true)
+  /// 不要の理由（例: 技能実習2号修了のため免除）
+  skipReason  String?
+  /// アップロードしたファイルのパス（Box）
+  filePath    String?
+  /// メモ・注記事項
+  notes       String?
+  /// 担当者（Supabase Auth UID）
+  assigneeId  String?           @db.Uuid
+  /// 完了日時
+  completedAt DateTime?
+  /// 作成者スタッフID
+  createdById String?           @db.Uuid
+  /// 更新者スタッフID
+  updatedById String?           @db.Uuid
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  /// 所属プロジェクト
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// 生成元のテンプレート
+  template SkillTaskTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  /// 作成者
+  createdBy Staff?           @relation("ProjectTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  /// 更新者
+  updatedBy Staff?           @relation("ProjectTaskUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+  @@index([templateId])
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([updatedById])
+  @@map("project_tasks")
+}
+
+/// プロジェクトメンバー（参加者と権限）
+model ProjectMember {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 所属プロジェクト
+  projectId String      @db.Uuid
+  /// 参加ユーザー（Supabase Auth UID）
+  userId    String      @db.Uuid
+  /// プロジェクト内の権限
+  role      ProjectRole @default(VIEWER)
+  createdAt DateTime    @default(now())
+
+  /// 所属プロジェクト
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// 同一プロジェクト内で同一ユーザーは一意
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}

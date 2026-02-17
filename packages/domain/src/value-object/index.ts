@@ -177,3 +177,42 @@ export type { JobMatchStatus } from './job-match-status.vo'
 
 export { supportPlanStatus } from './support-plan-status.vo'
 export type { SupportPlanStatus } from './support-plan-status.vo'
+
+// =============================================
+// 16-chatbot
+// =============================================
+export { userRole } from './user-role.vo'
+export type { UserRole } from './user-role.vo'
+
+export { messageRole } from './message-role.vo'
+export type { MessageRole } from './message-role.vo'
+
+export { auditAction } from './audit-action.vo'
+export type { AuditAction } from './audit-action.vo'
+
+export { approvalType } from './approval-type.vo'
+export type { ApprovalType } from './approval-type.vo'
+
+export { approvalStatus } from './approval-status.vo'
+export type { ApprovalStatus } from './approval-status.vo'
+
+// =============================================
+// 18-project
+// =============================================
+export { taskCategory } from './task-category.vo'
+export type { TaskCategory } from './task-category.vo'
+
+export { taskActionType } from './task-action-type.vo'
+export type { TaskActionType } from './task-action-type.vo'
+
+export { conditionOperator } from './condition-operator.vo'
+export type { ConditionOperator } from './condition-operator.vo'
+
+export { projectStatus } from './project-status.vo'
+export type { ProjectStatus } from './project-status.vo'
+
+export { projectTaskStatus } from './project-task-status.vo'
+export type { ProjectTaskStatus } from './project-task-status.vo'
+
+export { projectRole } from './project-role.vo'
+export type { ProjectRole } from './project-role.vo'

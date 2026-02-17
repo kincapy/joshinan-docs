@@ -59,6 +59,8 @@ model Staff {
   maxWeeklyLessons Int?
   /// 有効フラグ（退職時に false）
   isActive         Boolean         @default(true)
+  /// ユーザーロール（チャットボット・プロジェクト機能の権限）
+  userRole         UserRole        @default(GENERAL)
   /// 作成者スタッフID
   createdById      String?         @db.Uuid
   /// 更新者スタッフID
@@ -206,6 +208,18 @@ model Staff {
   /// SswInvoice
   createdSswInvoices          SswInvoice[]          @relation("SswInvoiceCreatedBy")
   updatedSswInvoices          SswInvoice[]          @relation("SswInvoiceUpdatedBy")
+  /// Skill
+  createdSkills               Skill[]               @relation("SkillCreatedBy")
+  updatedSkills               Skill[]               @relation("SkillUpdatedBy")
+  /// SkillTaskTemplate
+  createdSkillTaskTemplates   SkillTaskTemplate[]   @relation("SkillTaskTemplateCreatedBy")
+  updatedSkillTaskTemplates   SkillTaskTemplate[]   @relation("SkillTaskTemplateUpdatedBy")
+  /// Project
+  createdProjects             Project[]             @relation("ProjectCreatedBy")
+  updatedProjects             Project[]             @relation("ProjectUpdatedBy")
+  /// ProjectTask
+  createdProjectTasks         ProjectTask[]         @relation("ProjectTaskCreatedBy")
+  updatedProjectTasks         ProjectTask[]         @relation("ProjectTaskUpdatedBy")
 
   @@index([createdById])
   @@index([updatedById])
