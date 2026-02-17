@@ -22,6 +22,21 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
+
+### studentId の必須/任意ルール
+
+| タスク種別 | studentId |
+|-----------|----------|
+| ENROLLMENT_NOTIFICATION（受入れ開始届出） | 必須 |
+| DEPARTURE_NOTIFICATION（受入れ終了届出） | 必須 |
+| WITHDRAWAL_REPORT（退学報告） | 必須 |
+| LOW_ATTENDANCE_REPORT（出席率低下報告） | 必須 |
+| MISSING_PERSON_REPORT（所在不明者報告） | 必須 |
+| VISA_RENEWAL（ビザ更新） | 必須 |
+| CHANGE_NOTIFICATION（変更届出） | 任意 |
+| COE_APPLICATION（在留資格認定証明書交付申請） | 任意 |
 
 ### リレーション
 
@@ -43,6 +58,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -64,6 +81,9 @@ title: エンティティ定義
 | 完了日 | completedAt | Date | - | o | - | |
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### 複合ユニーク制約
 

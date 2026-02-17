@@ -40,7 +40,16 @@ graph LR
 
 #### フォーム内容
 
-テンプレートごとに異なる動的フォームを表示する。
+テンプレートごとに異なる動的フォームを表示する。フォーム定義はフロントエンドのコードベースで管理する（テンプレート数が少なく固定的なため、DB管理は不要）。
+
+##### テンプレート別フォーム定義
+
+| テンプレート (slug) | 入力フィールド | 型 | 必須 |
+|-------------------|-------------|-----|------|
+| shukkin-irai（出金依頼書） | 支払先名、金額、摘要、支払日、依頼者 | text, number, text, date, select(Staff) | 全て必須 |
+| inkan-shinsei（押印申請書） | 文書名、押印種別、用途、申請者 | text, select, text, select(Staff) | 全て必須 |
+| ringi-sakusei（稟議書） | 件名、金額、内容（長文）、起案者 | text, number, textarea, select(Staff) | 全て必須 |
+| shakai-hoken-soushitsu（社会保険喪失届） | 対象者、喪失日、喪失理由 | select(Staff), date, select | 全て必須 |
 
 - 送信時の処理: テンプレートに基づき文書を生成し、ダウンロードまたは保存
 - 送信後の遷移: 生成履歴
@@ -52,7 +61,7 @@ graph LR
 #### 表示内容
 
 - 参照エンティティ: GeneratedDocument
-  - 表示プロパティ: templateName, createdByName, createdAt
+  - 表示プロパティ: templateName, fileName, createdByName, createdAt, notes
 - ソート: 作成日時降順
 - ページネーション: あり（20件/ページ）
 

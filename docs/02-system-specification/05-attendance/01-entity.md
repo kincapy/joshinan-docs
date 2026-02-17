@@ -17,6 +17,8 @@ title: エンティティ定義
 | 出欠ステータス | status | Enum(AttendanceStatus) | ABSENT | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -44,6 +46,9 @@ title: エンティティ定義
 | 出席率 | rate | Float | - | - | - | 0.0〜1.0 |
 | アラートレベル | alertLevel | Enum(AttendanceAlertLevel) | NORMAL | - | - | 自動算出 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -75,6 +80,9 @@ title: エンティティ定義
 | 報告状態 | reportStatus | Enum(ReportStatus) | PENDING | - | - | |
 | 報告日 | reportedAt | Date | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ---
 
@@ -87,7 +95,7 @@ title: エンティティ定義
 | PRESENT | 出席 | 出席としてカウント |
 | ABSENT | 欠席 | 欠席としてカウント |
 | LATE | 遅刻 | 4回 = 欠席1回 |
-| EARLY_LEAVE | 早退 | — |
+| EARLY_LEAVE | 早退 | 出席としてカウント（回数は別途記録） |
 | EXCUSED | 公欠 | 出席扱い |
 | SUSPENDED | 出停 | 出席停止 |
 
@@ -96,7 +104,8 @@ title: エンティティ定義
 | 値 | 表示名 | 条件 | 対応 |
 |----|--------|------|------|
 | NORMAL | 正常 | 80%以上 | 対応不要 |
-| GUIDANCE_REQUIRED | 指導必要 | 50%以上80%未満 | 改善指導・指導記録の保存 |
+| CAUTION | 注意 | 70%以上80%未満 | 在留更新リスクあり・改善指導 |
+| GUIDANCE_REQUIRED | 指導必要 | 50%以上70%未満 | 改善指導・指導記録の保存 |
 | REPORT_REQUIRED | 入管報告必要 | 50%未満 | 改善指導 + 翌月末までに入管報告 |
 
 ### AttendanceTerm / 出席率報告期間

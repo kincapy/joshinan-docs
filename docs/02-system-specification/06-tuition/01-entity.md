@@ -17,6 +17,8 @@ title: エンティティ定義
 | 有効フラグ | isActive | Boolean | true | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -39,6 +41,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -46,10 +50,14 @@ title: エンティティ定義
 - Invoice → BillingItem: 請求品目 (N:1)
 - Invoice → Payment: この請求への入金 (1:N)
 
+### 複合ユニーク制約
+
+- (studentId, billingItemId, billingMonth) — 同一学生・同一品目・同一年月で重複請求を防止
+
 ### ビジネスルール
 
 - 売上として計上されるのは status が SETTLED の請求のみ
-- 月別請求テーブルに基づき、3月・8月は学費の請求を生成しない（寮費のみ）
+- 3月・8月は学費の請求を生成しない（寮費のみ）。この月別ルールはアプリケーションロジックで制御する（入学時期ごとの請求パターンは `02-data.md` の「月別請求テーブル」を参照）
 
 ---
 
@@ -68,11 +76,17 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
 - Payment → Student: 入金した学生 (N:1)
 - Payment → Invoice: 消込対象の請求 (N:1)
+
+### 設計メモ: 入金消込
+
+現在の設計では Payment.invoiceId は単一FKであり、1入金=1請求の消込を表現する。入金額が複数の請求を消込する場合は、アプリケーション側で古い請求から順に消込処理を行い、完全にカバーした請求のステータスを SETTLED に更新する。Payment レコード自体は最後に消込された Invoice に紐づく。将来的に中間テーブル（PaymentAllocation）での多対多管理が必要になった場合は拡張する。
 
 ---
 
@@ -90,6 +104,9 @@ title: エンティティ定義
 | 当月入金額 | monthlyPayment | Decimal | 0 | - | - | |
 | 当月末残高 | balance | Decimal | 0 | - | - | 自動算出 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 

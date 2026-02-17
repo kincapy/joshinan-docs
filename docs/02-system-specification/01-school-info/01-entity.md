@@ -24,6 +24,8 @@ title: エンティティ定義
 | 有効フラグ | isActive | Boolean | true | - | - | 論理削除用 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -51,6 +53,8 @@ title: エンティティ定義
 | 募集定員 | recruitmentCapacity | Int | - | - | - | 正の整数 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -94,3 +98,9 @@ title: エンティティ定義
 | OCTOBER | 10月 | 18ヶ月 |
 | JANUARY | 1月 | 15ヶ月 |
 | JULY | 7月 | 21ヶ月 |
+
+---
+
+::: info 費用項目マスタについて
+業務ナレッジ（02-data.md）で言及されている費用項目マスタ（FeeItem）は、06-tuition（学費管理）カテゴリの BillingItem エンティティとして定義している。
+:::

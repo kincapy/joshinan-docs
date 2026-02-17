@@ -22,6 +22,8 @@ title: エンティティ定義
 | 有効フラグ | isActive | Boolean | true | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -42,6 +44,8 @@ title: エンティティ定義
 | 時間帯区分 | timeSlot | Enum(TimeSlot) | - | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -70,6 +74,8 @@ title: エンティティ定義
 | 学期 | term | Enum(Term) | - | - | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### 複合ユニーク制約
 
