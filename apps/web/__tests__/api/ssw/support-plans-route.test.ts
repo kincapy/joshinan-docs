@@ -19,7 +19,7 @@ vi.mock('@/lib/api/auth', () => ({
 }))
 
 /** テスト対象をインポート */
-const { GET, POST, PUT } = await import('../../../app/api/ssw/support-plans/route')
+const { GET, POST } = await import('../../../app/api/ssw/support-plans/route')
 
 describe('GET /api/ssw/support-plans', () => {
   beforeEach(() => {
@@ -133,63 +133,3 @@ describe('POST /api/ssw/support-plans', () => {
   })
 })
 
-describe('PUT /api/ssw/support-plans', () => {
-  beforeEach(() => {
-    mockPrisma = createMockPrisma()
-  })
-
-  it('支援計画のステータスを更新できる', async () => {
-    const updatedPlan = {
-      id: 'plan-1',
-      status: 'COMPLETED',
-      endDate: new Date('2025-12-31'),
-      sswCase: {
-        id: 'case-1',
-        company: { id: 'c-1', name: 'テスト株式会社' },
-      },
-      student: { id: 's-1', nameEn: 'Taro', nameKanji: '太郎', studentNumber: 'S001' },
-    }
-    mockPrisma.supportPlan.update.mockResolvedValue(updatedPlan)
-
-    const request = createRequest('/api/ssw/support-plans', {
-      method: 'PUT',
-      body: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        status: 'COMPLETED',
-        endDate: '2025-12-31',
-      },
-    })
-
-    const response = await PUT(request)
-    const json = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(json.data.status).toBe('COMPLETED')
-  })
-
-  it('完了に変更する場合、終了日なしだとバリデーションエラー', async () => {
-    const request = createRequest('/api/ssw/support-plans', {
-      method: 'PUT',
-      body: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        status: 'COMPLETED',
-      },
-    })
-
-    const response = await PUT(request)
-    expect(response.status).toBe(400)
-  })
-
-  it('不正なステータスでバリデーションエラー', async () => {
-    const request = createRequest('/api/ssw/support-plans', {
-      method: 'PUT',
-      body: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        status: 'INVALID_STATUS',
-      },
-    })
-
-    const response = await PUT(request)
-    expect(response.status).toBe(400)
-  })
-})
