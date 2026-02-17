@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { ok } from '@/lib/api/response'
+import { ok, errorResponse } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/error'
 import { requireAuth } from '@/lib/api/auth'
 import { parseBody } from '@/lib/api/validation'
@@ -69,7 +69,7 @@ export async function DELETE(
     const { searchParams } = new URL(request.url)
     const aliasId = searchParams.get('aliasId')
     if (!aliasId) {
-      return ok({ error: 'aliasId is required' })
+      return errorResponse('aliasId is required', 400)
     }
 
     // 対象エージェントに属する別名か確認
