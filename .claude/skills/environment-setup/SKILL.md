@@ -1,188 +1,87 @@
 ---
 name: environment-setup
-description: Guide for setting up the development environment and running tests. Use when setting up the project for the first time, running API tests, or running E2E tests.
+description: joshinan-docs プロジェクトの環境セットアップガイド。初回セットアップ、開発サーバー起動、ビルド確認の手順を定義。
 ---
 
-# Environment Setup and Test Execution Guide
+# 環境セットアップガイド
 
-## Overview
+## When to Use
 
-This guide covers the complete setup process from fresh clone to running tests.
-Supports both Docker-based (local dev) and Docker-free (cloud agent) environments.
+- プロジェクトの初回セットアップ
+- 開発サーバーの起動方法を確認したいとき
+- ビルド・デプロイの手順を確認したいとき
 
-## Quick Start
+## プロジェクト構成
 
-### Local Development (with Docker)
+モノレポ構成（npm workspaces）:
+
+```
+joshinan-docs/
+├── docs/                     # VitePress ドキュメントサイト
+├── apps/web/                 # Next.js 業務アプリ
+├── packages/database/        # Prisma スキーマ・DB 層
+├── packages/domain/          # ドメイン層（Value Object）
+└── package.json              # ルート（workspaces 定義）
+```
+
+## セットアップ手順
 
 ```bash
-make docker-start   # Start PostgreSQL + Firebase Emulator
-make setup          # Copy .env, install deps, generate Prisma
-make db-seed        # Reset DB and seed data
-make dev            # Start API + Web dev servers
+# 1. 依存関係インストール
+npm install
+
+# 2. 環境変数ファイルの作成（apps/web/.env.local）
+#    → Supabase の接続情報を設定
+
+# 3. Prisma Client 生成
+npx prisma generate --schema=packages/database/prisma/schema
 ```
 
-### Cloud Agent / Docker-Free Setup
+## 開発コマンド
+
+| コマンド | 用途 |
+|----------|------|
+| `npm run dev` | VitePress 開発サーバー起動 |
+| `npm run build` | VitePress ビルド |
+| `npm run docs:build` | VitePress ビルド（worktree 環境用） |
+| `npm run preview` | ビルド後のプレビュー |
+
+### worktree 環境での注意
+
+- `npm run build` は Next.js 側のビルドも走るため、worktree 環境では失敗することがある
+- **worktree 環境では `npm run docs:build` を使う**
+
+## 認証
+
+- **Supabase Auth** を使用（Firebase ではない）
+- 環境変数: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+## DB 接続
+
+- **Supabase PostgreSQL** に接続
+- 環境変数: `DATABASE_URL`（`apps/web/.env.local` に設定）
+- ローカル DB ではなく Supabase のリモート DB を使用
+
+## デプロイ
+
+2つの Vercel プロジェクトが紐づいている:
+
+| プロジェクト | URL | 用途 |
+|---|---|---|
+| joshinan-docs | joshinan-docs.vercel.app | VitePress ドキュメント |
+| joshinan-app | joshinan-app.vercel.app | Next.js 業務アプリ |
+
+- `vercel.json` は**作成しない**（ダッシュボード設定で管理）
+- main に push → 両プロジェクトのビルドが走る（同時ビルド制限あり）
+
+## ビルド確認
+
+コード変更後は必ずビルドを通す:
 
 ```bash
-make setup-install  # Full setup without Docker
+# 通常環境
+npm run build
+
+# worktree 環境
+npm run docs:build
 ```
-
-This command (`scripts/setup-install.sh`) performs:
-- Checks prerequisites (Node.js >= 22, pnpm, PostgreSQL)
-- Copies `.env.sample` to `.env` for all apps
-- Installs pnpm dependencies
-- Starts PostgreSQL (tries pg_ctlcluster, systemctl, brew, pg_ctl)
-- Creates PostgreSQL user (`root`) and databases (`api_development`, `api_test`)
-- Starts Firebase Emulator (Docker if available, otherwise native with Java + firebase-tools)
-- Generates Prisma client and runs migrations
-- Builds all packages
-
-### Database-Only Setup
-
-```bash
-make setup-db       # Just PostgreSQL user, databases, and migrations
-```
-
-## Running API Tests
-
-```bash
-make test-api                                   # Run all API tests
-make test-api path=staff/sales/bookings.spec.ts # Run specific test file
-make test-api-name name="should create booking" # Run tests by name
-make test-db-setup                              # Reset test database
-```
-
-## Running E2E Tests
-
-### Full E2E Setup (Recommended for Cloud Agents)
-
-```bash
-make setup-e2e
-```
-
-This command (`scripts/setup-e2e.sh`) performs:
-1. Runs base setup if `node_modules` doesn't exist
-2. Starts PostgreSQL and Firebase Emulator (Docker or native)
-3. Creates `.env` files with E2E credentials (`e2e@bus-kaku.com`)
-4. Resets DB and seeds test data
-5. Builds API and Web applications
-6. Installs Playwright Chromium browser
-
-After setup, start servers and run tests:
-
-```bash
-# Option A: Use dev servers
-make dev            # In one terminal
-make test-e2e       # In another terminal
-
-# Option B: Use built servers (faster startup)
-(cd apps/api && set -a && . .env && node dist/main) &
-(cd apps/web && set -a && . .env && node_modules/.bin/next start --port 8080) &
-make test-e2e
-```
-
-### E2E Test Commands
-
-| Command | Description |
-|---------|-------------|
-| `make test-e2e` | Run all E2E tests (headless) |
-| `make test-e2e-headed` | Run with browser visible |
-| `make test-e2e-ui` | Run in Playwright UI mode |
-
-## Prerequisites
-
-- Node.js >= 22
-- pnpm (package manager)
-- PostgreSQL 16 (Docker or native)
-- Firebase Emulator (Docker or Java + firebase-tools)
-
-## Infrastructure
-
-### With Docker (Local Development)
-
-```bash
-make docker-start   # Start PostgreSQL + Firebase Emulator
-make docker-stop    # Stop services
-```
-
-### Without Docker (Cloud Agent)
-
-PostgreSQL:
-```bash
-# Start PostgreSQL
-sudo systemctl start postgresql
-# or: sudo pg_ctlcluster <version> main start
-# or: brew services start postgresql@16
-
-# Verify
-pg_isready -h localhost -p 5432
-```
-
-Firebase Emulator:
-```bash
-# Install prerequisites
-sudo apt-get install -y default-jre-headless
-npm install -g firebase-tools
-
-# Start emulator
-cd middleware/firebase-emulator
-firebase emulators:start --only auth,storage --project bus-kaku-local &
-
-# Verify
-curl -sf http://localhost:9099/
-```
-
-## Environment Variables
-
-### apps/api/.env
-```
-DATABASE_URL="postgres://root:password@localhost:5432/api_development"
-API_PORT=3000
-API_BASE_URL=http://localhost:3000
-WEB_FRONT_BASE_URL=http://localhost:8080
-FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-FIREBASE_EMAIL=<seed user email>
-FIREBASE_PASSWORD=<seed user password>
-GCP_PROJECT_ID=bus-kaku-local
-```
-
-### apps/web/.env
-```
-API_BASE_URL=http://localhost:3000
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
-NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-```
-
-### e2e/.env
-```
-BASE_URL=http://localhost:8080
-LOGIN_EMAIL=<same as FIREBASE_EMAIL>
-LOGIN_PASSWORD=<same as FIREBASE_PASSWORD>
-```
-
-## All Commands Summary
-
-| Command | Description |
-|---------|-------------|
-| `make setup` | Basic setup (copy .env, install deps) |
-| `make setup-install` | Full setup without Docker |
-| `make setup-db` | Database-only setup |
-| `make setup-e2e` | E2E test environment setup |
-| `make docker-start` | Start Docker services |
-| `make dev` | Start dev servers |
-| `make test-api` | Run API tests |
-| `make test-e2e` | Run E2E tests |
-| `make db-seed` | Reset DB and seed data |
-| `make db-reset` | Reset DB (no seed) |
-| `make test-db-setup` | Reset test database |
-
-## Troubleshooting
-
-If setup or tests fail, refer to the `environment-setup-troubleshooting` skill for detailed error resolution.
-
-Common issues:
-- PostgreSQL not running → `make setup-db` or `make docker-start`
-- Firebase Emulator not running → Check Java installation or use Docker
-- User authentication failed → Check PostgreSQL user/password
-- Module not found → Run `pnpm build`
-- E2E tests fail with auth error → Verify `e2e/.env` credentials match `apps/api/.env`
