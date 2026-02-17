@@ -156,7 +156,9 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/15-specified-skilled-worker/' },
+                { text: '業務フロー', link: '/01-domain-knowledge/15-specified-skilled-worker/01-work-flow' },
                 { text: 'データ', link: '/01-domain-knowledge/15-specified-skilled-worker/02-data' },
+                { text: '課題', link: '/01-domain-knowledge/15-specified-skilled-worker/03-issues' },
               ],
             },
           ],
@@ -304,6 +306,33 @@ export default defineConfig({
                 { text: '概要', link: '/02-system-specification/15-specified-skilled-worker/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/15-specified-skilled-worker/01-entity' },
                 { text: 'UIUX定義', link: '/02-system-specification/15-specified-skilled-worker/02-uiux' },
+              ],
+            },
+            {
+              text: '16 チャットボット',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/16-chatbot/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/16-chatbot/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/16-chatbot/02-uiux' },
+              ],
+            },
+            {
+              text: '17 帳票出力',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/17-documents/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/17-documents/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/17-documents/02-uiux' },
+              ],
+            },
+            {
+              text: '18 プロジェクト',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/02-system-specification/18-project/' },
+                { text: 'エンティティ定義', link: '/02-system-specification/18-project/01-entity' },
+                { text: 'UIUX定義', link: '/02-system-specification/18-project/02-uiux' },
               ],
             },
           ],

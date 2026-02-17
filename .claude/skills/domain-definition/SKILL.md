@@ -1,148 +1,52 @@
 ---
 name: domain-definition
-description: Guide for defining domain entities, value objects, and business logic in packages/domain. Use when creating new entities, enums, validation rules, or domain logic shared between API and Web.
+description: ドメイン層（packages/domain）の定義ガイド。Value Object（Enum）の定義パターンを説明。新しいカテゴリ実装時の VO 追加・既存 VO の確認に使用する。
 ---
 
-# Domain Definition Guide
+# ドメイン定義ガイド
 
 ## When to Use
 
-- Creating new domain entities
-- Defining value objects (enums, validated types)
-- Implementing business logic shared between API and Web
-- Adding validation rules with Zod schemas
+- 新しい Value Object（Enum）を追加するとき
+- 既存 VO の構造・パターンを確認したいとき
+- `@joshinan/domain` からのインポートパターンを確認したいとき
 
-## Architecture Overview
-
-The `packages/domain` package contains shared domain definitions used by both `apps/api` and `apps/web`.
+## ディレクトリ構成
 
 ```
 packages/domain/src/
-├── entity/               # Domain entities (Zod schemas)
-│   └── {resource}.entity.ts
-├── value-object/         # Value objects (enums, validated types)
-│   └── {type}.vo.ts
-└── logic/                # Business logic (calculations, validations)
-    └── {feature}/
-        └── {operation}.ts
+├── index.ts              # export * from './value-object'
+└── value-object/
+    ├── index.ts          # 全 VO の re-export（カテゴリ別にコメント分類）
+    └── *.vo.ts           # 約47個の Value Object ファイル
 ```
 
-## Entity Definition
+**重要:** このプロジェクトでは `entity/` ディレクトリは**存在しない**。ドメイン層は Value Object（主に Enum）のみで構成されている。
 
-### Basic Structure
-
-```typescript
-// entity/resource.entity.ts
-import { z } from 'zod'
-import { resourceStatus } from '../value-object/resource-status.vo'
-import { resourceCategory } from '../value-object/resource-category.vo'
-
-// Full entity schema with all fields
-const schema = z.object({
-  id: z.uuid(),
-  customerId: z.uuid('顧客を選択してください'), // Custom error message
-
-  // Required fields with validation
-  name: z.string().min(1, '名前を入力してください'),
-  status: resourceStatus.schema,
-  category: resourceCategory.schema,
-
-  // Date fields
-  startDate: z.date(),
-  endDate: z.date(),
-
-  // Numeric fields
-  amount: z.number().int().nonnegative(),
-  rate: z.number().min(0).max(1),
-
-  // Nullable fields
-  memo: z.string().nullable(),
-
-  // Timestamps
-  createdAt: z.date(),
-  updatedAt: z.date(),
-})
-
-type Resource = z.infer<typeof schema>
-
-// Schema for creating new entities (exclude auto-generated fields)
-const newSchema = schema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-})
-
-type NewResource = z.infer<typeof newSchema>
-
-// Schema for updating entities (exclude immutable fields, make all partial)
-const mutableSchema = schema
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .partial()
-
-type MutableResource = z.infer<typeof mutableSchema>
-
-// Helper functions (optional)
-const generateCode = (lastCode?: string): string => {
-  const now = new Date()
-  const prefix = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('')
-  const lastSuffix = lastCode?.split('-')[1] ?? '0'
-  const suffix = Number(lastSuffix) + 1
-  return `${prefix}-${suffix}`
-}
-
-// Export everything
-export const resourceEntity = {
-  schema,
-  newSchema,
-  mutableSchema,
-  generateCode,
-}
-
-export type { Resource, NewResource, MutableResource }
-```
-
-### Entity Schema Patterns
-
-| Schema | Purpose | Fields Excluded |
-|--------|---------|-----------------|
-| `schema` | Full entity representation | None |
-| `newSchema` | Creating new entities | `id`, `createdAt`, `updatedAt` |
-| `mutableSchema` | Updating entities | `id`, timestamps + `.partial()` |
-
-## Value Object Definition
-
-### Enum Value Object
+## Value Object（Enum）の定義パターン
 
 ```typescript
 // value-object/resource-status.vo.ts
 import { z } from 'zod'
 
-// Define all possible values as const array
-const values = ['draft', 'active', 'completed', 'canceled'] as const
+/** ステータスの選択肢 */
+const values = ['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELED'] as const
 
-// Create Zod enum schema
+/** Zod スキーマ */
 const schema = z.enum(values)
 
-// Infer TypeScript type
+/** TypeScript 型 */
 type ResourceStatus = z.input<typeof schema>
 
-// Japanese label mapping
+/** 日本語ラベル */
 const labelMap: Record<ResourceStatus, string> = {
-  draft: '下書き',
-  active: '有効',
-  completed: '完了',
-  canceled: 'キャンセル',
+  DRAFT: '下書き',
+  ACTIVE: '有効',
+  COMPLETED: '完了',
+  CANCELED: 'キャンセル',
 } as const
 
-// Reverse mapping (label → value)
+/** ラベル → 値の逆マッピング */
 const valueMap: Record<string, ResourceStatus> = Object.fromEntries(
   Object.entries(labelMap).map(([value, label]) => [
     label,
@@ -150,7 +54,7 @@ const valueMap: Record<string, ResourceStatus> = Object.fromEntries(
   ]),
 )
 
-// Options for select/dropdown components
+/** セレクトボックス用オプション配列 */
 const options = Object.entries(labelMap).map(([value, label]) => ({
   value: value as ResourceStatus,
   label,
@@ -166,116 +70,72 @@ export const resourceStatus = {
 export type { ResourceStatus }
 ```
 
-### Validated String Value Object
+## index.ts への登録パターン
 
 ```typescript
-// value-object/phone-number.vo.ts
-import { z } from 'zod'
+// value-object/index.ts
 
-// Regex for validation
-const regex = /^[0-9-]+$/
-
-const schema = z
-  .string()
-  .refine(
-    (val) => val === '' || regex.test(val),
-    '電話番号は数字とハイフンのみ入力可能です',
-  )
-
-export const phoneNumber = { schema }
+// =============================================
+// XX-category-name
+// =============================================
+export { resourceStatus } from './resource-status.vo'
+export type { ResourceStatus } from './resource-status.vo'
 ```
 
-### Codec Value Object (Type Transformation)
+カテゴリ番号のコメントで分類されている。新しい VO を追加する場合は、対応するカテゴリセクションに追加する。
+
+## 使用パターン
+
+### API Route での使用
 
 ```typescript
-// value-object/date-without-time.vo.ts
-import { format } from 'date-fns'
-import { z } from 'zod'
+// apps/web/app/api/resources/route.ts
+import { resourceStatus } from '@joshinan/domain'
 
-// Codec: Date ↔ ISO date string ("2024-01-15")
-const schema = z.codec(z.date(), z.iso.date(), {
-  decode: (date: Date) => format(date, 'yyyy-MM-dd'),
-  encode: (value: string) => new Date(`${value}T00:00:00.000Z`),
+const createSchema = z.object({
+  status: resourceStatus.schema,  // Zod スキーマとして使用
 })
-
-export const dateWithoutTime = { schema }
 ```
 
-### Composite Value Object
+### フロントエンドでの使用
 
 ```typescript
-// value-object/pagination.vo.ts
-import { z } from 'zod'
+// apps/web/app/(auth)/resources/page.tsx
+import { resourceStatus } from '@joshinan/domain'
 
-// Codec for page number (string ↔ number for URL params)
-const pageSchema = z.codec(z.string(), z.number().int().positive(), {
-  decode: (num) => num.toString(),
-  encode: (str) => Math.max(1, Number.parseInt(str, 10) || 1),
-})
+// セレクトボックス
+<Select options={resourceStatus.options} />
 
-// Codec for per-page count
-const perSchema = z.codec(z.string(), z.number().int().positive(), {
-  decode: (num) => num.toString(),
-  encode: (str) => Math.min(100, Math.max(1, Number.parseInt(str, 10) || 20)),
-})
-
-// Response DTO schema
-const dtoSchema = z.object({
-  page: z.number(),
-  per: z.number(),
-  totalCount: z.number(),
-  totalPages: z.number(),
-})
-
-export const pagination = { pageSchema, perSchema, dtoSchema }
+// バッジ表示
+<Badge>{resourceStatus.labelMap[item.status]}</Badge>
 ```
 
-## Implementation Checklist
+## 既存 VO の状態
 
-When adding a new domain concept:
+**全カテゴリの VO は定義済み（約47個）。** 新しいカテゴリの実装時に VO を一から書く必要はほとんどない。既存の VO を確認してから使用すること。
 
-### For Entities
+### カテゴリ別 VO 数
 
-1. [ ] Create entity file in `entity/{resource}.entity.ts`
-2. [ ] Define full `schema` with all fields
-3. [ ] Create `newSchema` (omit auto-generated fields)
-4. [ ] Create `mutableSchema` (omit immutable fields, make partial)
-5. [ ] Export entity object and types
+| カテゴリ | VO 数 |
+|----------|--------|
+| 01-school-info | 3 |
+| 02-student-management | 9 |
+| 03-curriculum | 5 |
+| 04-class-assignment | 2 |
+| 05-attendance | 3 |
+| 06-tuition | 2 |
+| 07-agent-management | 2 |
+| 08-facility-management | 1 |
+| 09-staff-management | 4 |
+| 11-immigration-report | 5 |
+| 12-internal-documents | 1 |
+| 14-recruitment | 5 |
+| 15-specified-skilled-worker | 4 |
 
-### For Value Objects
+## 実装チェックリスト
 
-1. [ ] Create value object file in `value-object/{type}.vo.ts`
-2. [ ] Define schema with validation
-3. [ ] Add `labelMap` for Japanese labels (if enum)
-4. [ ] Add `options` for UI dropdowns (if enum)
-5. [ ] Export value object and type
-
-### For Logic
-
-1. [ ] Create logic file in `logic/{feature}/{operation}.ts`
-2. [ ] Define input/output types
-3. [ ] Implement pure functions (no side effects)
-4. [ ] Export functions
-
-## Naming Conventions
-
-| Type | File Pattern | Export Pattern |
-|------|-------------|----------------|
-| Entity | `{resource}.entity.ts` | `resourceEntity` + `Resource`, `NewResource`, `MutableResource` |
-| Value Object | `{type}.vo.ts` | `typeName` + `TypeName` (type) |
-| Logic | `{operation}.ts` | `calcXxx`, `determineXxx`, `validateXxx` |
-
-## Import Patterns
-
-```typescript
-// Entity import
-import {
-  resourceEntity,
-  Resource,
-  NewResource,
-  MutableResource,
-} from '@repo/domain/entity/resource.entity'
-
-// Value Object import
-import { resourceStatus, ResourceStatus } from '@repo/domain/value-object/resource-status.vo'
-```
+1. [ ] `packages/domain/src/value-object/` に既存の VO がないか確認
+2. [ ] 新規 VO が必要なら `{type}.vo.ts` を作成
+3. [ ] `values`, `schema`, `labelMap`, `options` を必ず定義
+4. [ ] `value-object/index.ts` に export を追加（カテゴリコメント内）
+5. [ ] Prisma Enum の値と VO の `values` が一致していることを確認
