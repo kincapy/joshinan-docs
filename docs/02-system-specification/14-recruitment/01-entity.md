@@ -19,6 +19,8 @@ title: エンティティ定義
 | 募集目標人数 | targetCount | Int | - | - | - | 正の整数 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### unique制約
 
@@ -58,6 +60,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -65,6 +69,8 @@ title: エンティティ定義
 - ApplicationCase → Agent: 担当エージェント (N:1)
 - ApplicationCase → Student: 交付後にリンクされる学生 (N:1)
 - ApplicationCase → ApplicationDocument: この申請の書類 (1:N)
+
+> ※ 02-student-management 側の Student リレーションにも逆参照（Student → ApplicationCase 1:1）を記載すること
 
 ### ビジネスルール
 
@@ -90,6 +96,8 @@ title: エンティティ定義
 | 備考 | notes | String | - | o | - | 不備内容など |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -115,6 +123,8 @@ title: エンティティ定義
 | 結果 | result | Enum(CheckResult) | - | - | - | |
 | 指摘事項 | findings | String | - | o | - | NG の場合の具体的な指摘内容 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -146,7 +156,7 @@ title: エンティティ定義
 | 値 | 表示名 | 備考 |
 |----|--------|------|
 | APPLICATION_FORM | 在留資格認定証明書交付申請書 | 全申請者必須 |
-| CHECKLIST | 提出書類一覧表・各種確認書 | 全申請者必須 |
+| CHECKLIST | 提出書類一覧表・各種確認書 | 全申請者必須。提出書類一覧表と各種確認書を1つのPDFにまとめてアップロードする運用 |
 | PASSPORT_COPY | 旅券写し | 全申請者必須 |
 | JAPANESE_ABILITY | 日本語能力資料 | 別表掲載国以外で必要 |
 | FINANCIAL_SUPPORT | 経費支弁書 | 別表掲載国以外で必要 |

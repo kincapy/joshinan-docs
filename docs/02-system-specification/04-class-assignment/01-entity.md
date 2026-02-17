@@ -23,6 +23,8 @@ title: エンティティ定義
 | 終了日 | endDate | Date | - | - | - | クラスの終了日 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### リレーション
 
@@ -51,6 +53,8 @@ title: エンティティ定義
 | 在籍終了日 | endDate | Date | - | o | - | null = 在籍中 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
+| 作成者ID | createdById | UUID | - | o | - | FK → Staff |
+| 更新者ID | updatedById | UUID | - | o | - | FK → Staff |
 
 ### unique 制約
 
