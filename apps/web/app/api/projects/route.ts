@@ -20,7 +20,8 @@ const listQuerySchema = z.object({
 /** プロジェクト作成のバリデーションスキーマ */
 const createProjectSchema = z.object({
   skillId: z.string().uuid('スキルIDが不正です'),
-  name: z.string().min(1, 'プロジェクト名は必須です'),
+  /** プロジェクト名（省略時は「{学生名}の{スキル名}」を自動生成） */
+  name: z.string().optional(),
   contextData: z.record(z.unknown()),
 })
 
@@ -82,11 +83,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // studentId が指定されている場合、学生名と国籍を取得する
+    const contextData = { ...body.contextData }
+    let studentName: string | undefined
+    if (contextData.studentId && typeof contextData.studentId === 'string') {
+      const student = await prisma.student.findUnique({
+        where: { id: contextData.studentId },
+        select: { nameKanji: true, nationality: true },
+      })
+      if (student) {
+        studentName = student.nameKanji ?? undefined
+        // 国籍が contextData に未設定なら学生DBから自動取得する
+        if (!contextData.nationality) {
+          contextData.nationality = student.nationality
+        }
+      }
+    }
+
+    // プロジェクト名の自動生成（明示指定がなければ「{学生名}の{スキル名}」）
+    const projectName = body.name
+      || (studentName ? `${studentName}の${skill.name}` : skill.name)
+
     // 条件分岐ルールを評価して、各タスクの必須/不要を判定
     const conditionResults = evaluateConditions(
       skill.taskTemplates,
       skill.conditionRules,
-      body.contextData,
+      contextData,
     )
 
     // テンプレートごとの評価結果を taskCode で引けるようにする
@@ -99,9 +121,9 @@ export async function POST(request: NextRequest) {
       data: {
         skillId: body.skillId,
         ownerId: user.id,
-        name: body.name,
-        // Prisma の Json 型に合わせてキャストする
-        contextData: body.contextData as Prisma.InputJsonValue,
+        name: projectName,
+        // Prisma の Json 型に合わせてキャストする（国籍自動取得済み）
+        contextData: contextData as Prisma.InputJsonValue,
         // タスクテンプレートから ProjectTask を自動生成
         tasks: {
           create: skill.taskTemplates.map((template) => {

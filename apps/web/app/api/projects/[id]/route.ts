@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { ok } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/error'
@@ -13,6 +14,8 @@ type RouteParams = { params: Promise<{ id: string }> }
 const updateProjectSchema = z.object({
   name: z.string().min(1).optional(),
   status: z.enum(['ACTIVE', 'COMPLETED', 'SUSPENDED', 'CANCELLED']).optional(),
+  /** contextData の部分更新（既存データにマージされる） */
+  contextData: z.record(z.unknown()).optional(),
 })
 
 /** GET /api/projects/:id -- プロジェクト詳細（tasks, members を include、進捗率計算） */
@@ -67,9 +70,23 @@ export async function PATCH(
     const body = await parseBody(request, updateProjectSchema)
 
     // COMPLETED に変更する場合は completedAt を設定する
-    const data: Record<string, unknown> = { ...body }
-    if (body.status === 'COMPLETED') {
-      data.completedAt = new Date()
+    const data: Record<string, unknown> = {}
+    if (body.name) data.name = body.name
+    if (body.status) {
+      data.status = body.status
+      if (body.status === 'COMPLETED') {
+        data.completedAt = new Date()
+      }
+    }
+
+    // contextData は既存データとマージする
+    if (body.contextData) {
+      const current = await prisma.project.findUniqueOrThrow({
+        where: { id },
+        select: { contextData: true },
+      })
+      const existing = (current.contextData as Record<string, unknown>) ?? {}
+      data.contextData = { ...existing, ...body.contextData } as Prisma.InputJsonValue
     }
 
     const updated = await prisma.project.update({
