@@ -42,7 +42,17 @@ export const toolRegistry: Record<string, ToolEntry> = {
           },
           status: {
             type: 'string',
-            description: '在籍ステータス',
+            description:
+              '在籍ステータス（ENROLLED=在学, PRE_ENROLLMENT=入学前, ON_LEAVE=休学, WITHDRAWN=退学, EXPELLED=除籍, GRADUATED=卒業, COMPLETED=修了）',
+            enum: [
+              'PRE_ENROLLMENT',
+              'ENROLLED',
+              'ON_LEAVE',
+              'WITHDRAWN',
+              'EXPELLED',
+              'GRADUATED',
+              'COMPLETED',
+            ],
           },
           maxAttendanceRate: {
             type: 'number',

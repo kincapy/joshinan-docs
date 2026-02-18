@@ -1,5 +1,42 @@
 import { prisma } from '@/lib/prisma'
 
+/** Prisma の StudentStatus enum 値 */
+const VALID_STATUSES = [
+  'PRE_ENROLLMENT',
+  'ENROLLED',
+  'ON_LEAVE',
+  'WITHDRAWN',
+  'EXPELLED',
+  'GRADUATED',
+  'COMPLETED',
+] as const
+
+/** 日本語ステータス → enum 値の変換マップ（AI が日本語で返した場合のフォールバック） */
+const STATUS_JP_MAP: Record<string, string> = {
+  入学前: 'PRE_ENROLLMENT',
+  在学: 'ENROLLED',
+  在学中: 'ENROLLED',
+  休学: 'ON_LEAVE',
+  退学: 'WITHDRAWN',
+  除籍: 'EXPELLED',
+  卒業: 'GRADUATED',
+  修了: 'COMPLETED',
+}
+
+/**
+ * ステータス入力を enum 値に正規化する
+ *
+ * AI が enum 値を返した場合はそのまま通し、
+ * 日本語を返した場合はマップで変換する
+ */
+function normalizeStatus(raw: string): string | null {
+  const upper = raw.toUpperCase()
+  if (VALID_STATUSES.includes(upper as (typeof VALID_STATUSES)[number])) {
+    return upper
+  }
+  return STATUS_JP_MAP[raw] ?? null
+}
+
 /**
  * 学生検索の Tool Use ハンドラ
  *
@@ -15,9 +52,12 @@ export async function searchStudents(
     where.nameEn = { contains: String(input.name), mode: 'insensitive' }
   }
 
-  // ステータスフィルタ
+  // ステータスフィルタ（enum 値に正規化してからクエリに渡す）
   if (input.status) {
-    where.status = String(input.status)
+    const normalized = normalizeStatus(String(input.status))
+    if (normalized) {
+      where.status = normalized
+    }
   }
 
   const students = await prisma.student.findMany({
