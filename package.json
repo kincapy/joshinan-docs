@@ -20,7 +20,9 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@vercel/functions": "^3.4.2"
+    "@vercel/functions": "^3.4.2",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1"
   },
   "packageManager": "pnpm@10.29.1",
   "pnpm": {
