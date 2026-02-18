@@ -21,6 +21,7 @@ title: エンティティ定義
 | 給与形態 | payType | Enum(PayType) | - | o | - | 非常勤の場合に設定 |
 | 週間コマ数上限 | maxWeeklyLessons | Int | - | o | - | 常勤: 25（望ましくは16）、非常勤: null |
 | 有効フラグ | isActive | Boolean | true | - | - | 退職時に false |
+| ユーザーロール | userRole | Enum(UserRole) | GENERAL | - | - | チャットボット・プロジェクト機能の権限 |
 | 作成日時 | createdAt | DateTime | auto | - | - | |
 | 更新日時 | updatedAt | DateTime | auto | - | - | |
 | 作成者ID | createdById | UUID | - | o | - | FK → Staff |
@@ -110,3 +111,13 @@ title: エンティティ定義
 | TRAINING_420H | 420時間養成講座 | 通常3〜6ヶ月で修了 |
 | CERTIFICATION_EXAM | 検定合格 | 日本語教育能力検定試験 |
 | REGISTERED_TEACHER | 登録日本語教師 | 国家資格（移行中） |
+
+### UserRole / ユーザーロール
+
+チャットボット・プロジェクト機能での権限を定義する。[16-chatbot エンティティ定義](../16-chatbot/01-entity.md)で定義。
+
+| 値 | 表示名 | 備考 |
+|----|--------|------|
+| GENERAL | 一般ユーザー | ナレッジ回答・データ照会のみ |
+| ADMIN | 管理者 | データ変更・ナレッジ更新申請が可能 |
+| APPROVER | 決裁者 | 承認/却下の権限を持つ |
