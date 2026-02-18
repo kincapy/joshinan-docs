@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { projectTaskStatus } from '@joshinan/domain'
-import { ArrowLeft, Upload, FileText, X, Check } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, X, Check, Download, Loader2 } from 'lucide-react'
 
 // =============================================
 // 型定義
@@ -853,6 +853,8 @@ function ReviewSection({ projectId }: { projectId: string }) {
     company: { completed: number; total: number }
     incomplete: { taskCode: string; taskName: string; status: string }[]
   } | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState('')
 
   useEffect(() => {
     async function fetchSummary() {
@@ -913,6 +915,48 @@ function ReviewSection({ projectId }: { projectId: string }) {
   const allComplete =
     summary !== null && summary.incomplete.length === 0
 
+  /** 申請書類セットを生成してZIPダウンロードする */
+  async function handleGenerate() {
+    setGenerating(true)
+    setGenerateError('')
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/generate-documents`,
+        { method: 'POST' },
+      )
+
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.message || json.error || '書類生成に失敗しました')
+      }
+
+      // レスポンスのZIPバイナリをダウンロードする
+      const blob = await res.blob()
+      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
+      // ファイル名をヘッダーから取得（エンコード済み）
+      const fileNameMatch = contentDisposition.match(/filename="(.+)"/)
+      const fileName = fileNameMatch
+        ? decodeURIComponent(fileNameMatch[1])
+        : '申請書類.zip'
+
+      // ブラウザでダウンロードを開始
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setGenerateError(
+        err instanceof Error ? err.message : '書類生成に失敗しました',
+      )
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -960,17 +1004,42 @@ function ReviewSection({ projectId }: { projectId: string }) {
               </div>
             )}
 
-            {allComplete && (
-              <div className="space-y-3">
+            {generateError && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {generateError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {allComplete ? (
                 <p className="text-sm text-green-600 font-medium">
                   全タスク完了。申請書類セットを生成できます。
                 </p>
-                <Button disabled>申請書類セットを生成</Button>
-                <p className="text-xs text-muted-foreground">
-                  PDF 生成機能は将来実装予定です。
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  全必須タスクが完了すると、書類セットを生成できます。
                 </p>
-              </div>
-            )}
+              )}
+              <Button
+                onClick={handleGenerate}
+                disabled={!allComplete || generating}
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    申請書類セットを生成
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                現在は DOC-001（在留資格変更許可申請書）のみ対応。他の書類は今後追加予定です。
+              </p>
+            </div>
           </>
         )}
       </CardContent>
