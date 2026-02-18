@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   },
   // Prisma のネイティブモジュールをサーバーサイド外部パッケージとして扱う
   serverExternalPackages: ["@prisma/client"],
+  // Vercel デプロイ時にテンプレートファイルをバンドルに含める
+  // （申請書類の Excel テンプレートをサーバーサイドで読み込むため必要）
+  outputFileTracingIncludes: {
+    "/api/projects/\\[id\\]/generate-documents": [
+      "./templates/ssw-application/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
