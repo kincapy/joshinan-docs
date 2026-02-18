@@ -24,13 +24,51 @@ const updateTaskSchema = z.object({
   assigneeId: z.string().uuid().nullable().optional(),
 })
 
-/** PATCH /api/projects/:id/tasks/:taskId -- タスク更新 */
+/** GET /api/projects/:id/tasks/:taskId -- タスク詳細取得（ステータス変更履歴付き） */
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
+  try {
+    await requireAuth()
+    const { id, taskId } = await params
+
+    // プロジェクトの存在確認
+    await prisma.project.findUniqueOrThrow({
+      where: { id },
+      select: { id: true },
+    })
+
+    const task = await prisma.projectTask.findUniqueOrThrow({
+      where: { id: taskId },
+      include: {
+        template: {
+          select: {
+            category: true,
+            actionType: true,
+            description: true,
+          },
+        },
+        // ステータス変更履歴を新しい順で取得
+        statusLogs: {
+          orderBy: { changedAt: 'desc' },
+        },
+      },
+    })
+
+    return ok(task)
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+/** PATCH /api/projects/:id/tasks/:taskId -- タスク更新（ステータス変更履歴を記録） */
 export async function PATCH(
   request: NextRequest,
   { params }: RouteParams,
 ) {
   try {
-    await requireAuth()
+    const user = await requireAuth()
     const { id, taskId } = await params
     const body = await parseBody(request, updateTaskSchema)
 
@@ -39,6 +77,26 @@ export async function PATCH(
       where: { id },
       select: { id: true },
     })
+
+    // ステータス変更がある場合、変更前のステータスを取得して履歴に記録する
+    if (body.status) {
+      const currentTask = await prisma.projectTask.findUniqueOrThrow({
+        where: { id: taskId },
+        select: { status: true },
+      })
+
+      // 変更前と変更後が異なる場合のみ履歴を記録
+      if (currentTask.status !== body.status) {
+        await prisma.projectTaskStatusLog.create({
+          data: {
+            taskId,
+            fromStatus: currentTask.status,
+            toStatus: body.status,
+            changedById: user.id,
+          },
+        })
+      }
+    }
 
     const data: Record<string, unknown> = { ...body }
 
@@ -54,6 +112,18 @@ export async function PATCH(
     const updated = await prisma.projectTask.update({
       where: { id: taskId },
       data,
+      include: {
+        template: {
+          select: {
+            category: true,
+            actionType: true,
+            description: true,
+          },
+        },
+        statusLogs: {
+          orderBy: { changedAt: 'desc' },
+        },
+      },
     })
 
     return ok(updated)

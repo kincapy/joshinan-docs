@@ -244,6 +244,8 @@ model ProjectTask {
   createdBy Staff?           @relation("ProjectTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   /// 更新者
   updatedBy Staff?           @relation("ProjectTaskUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  /// ステータス変更履歴 (1:N)
+  statusLogs ProjectTaskStatusLog[]
 
   @@index([projectId])
   @@index([templateId])
@@ -251,6 +253,28 @@ model ProjectTask {
   @@index([createdById])
   @@index([updatedById])
   @@map("project_tasks")
+}
+
+/// タスクのステータス変更履歴
+model ProjectTaskStatusLog {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 対象タスク
+  taskId     String            @db.Uuid
+  /// 変更前のステータス
+  fromStatus ProjectTaskStatus
+  /// 変更後のステータス
+  toStatus   ProjectTaskStatus
+  /// 変更した人（Supabase Auth UID）
+  changedById String           @db.Uuid
+  /// 変更日時
+  changedAt   DateTime         @default(now())
+
+  /// 対象タスク
+  task ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([changedById])
+  @@map("project_task_status_logs")
 }
 
 /// プロジェクトメンバー（参加者と権限）
