@@ -155,9 +155,10 @@ export default function BulkUploadPage() {
     setError('')
     try {
       const assignments = results
-        .filter((r) => r.taskId)
+        .filter((r) => r.taskId && r.taskCode)
         .map((r) => ({
           fileName: r.fileName,
+          filePath: `${r.taskCode}/${r.fileName}`,
           taskId: r.taskId!,
         }))
 

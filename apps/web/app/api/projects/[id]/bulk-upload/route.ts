@@ -78,9 +78,17 @@ export async function POST(
       })),
     )
 
+    // フロントで振り分け先を変更できるよう、タスク一覧も返す
+    const taskOptions = project.tasks.map((t) => ({
+      id: t.id,
+      taskCode: t.taskCode,
+      taskName: t.taskName,
+    }))
+
     return ok({
       projectId: id,
       results: analysisResults,
+      tasks: taskOptions,
     })
   } catch (error) {
     return handleApiError(error)

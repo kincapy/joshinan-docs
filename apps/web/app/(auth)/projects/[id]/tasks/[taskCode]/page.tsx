@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { projectTaskStatus } from '@joshinan/domain'
-import { ArrowLeft, Upload } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, X, Check } from 'lucide-react'
 
 // =============================================
 // 型定義
@@ -42,11 +42,40 @@ type TaskDetail = {
   statusLogs: StatusLog[]
 }
 
+/** 企業情報フォームの型（Company テーブルに対応） */
+type CompanyFormData = {
+  name: string
+  representative: string
+  postalCode: string
+  address: string
+  phone: string
+  field: string
+  businessLicense: string
+  corporateNumber: string
+  establishedDate: string
+  notes: string
+}
+
+const EMPTY_COMPANY: CompanyFormData = {
+  name: '',
+  representative: '',
+  postalCode: '',
+  address: '',
+  phone: '',
+  field: '',
+  businessLicense: '',
+  corporateNumber: '',
+  establishedDate: '',
+  notes: '',
+}
+
 // =============================================
 // ヘルパー関数
 // =============================================
 
-function taskStatusVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
+function taskStatusVariant(
+  status: string,
+): 'default' | 'secondary' | 'outline' | 'destructive' {
   switch (status) {
     case 'NOT_STARTED': return 'outline'
     case 'IN_PROGRESS': return 'default'
@@ -64,12 +93,13 @@ function formatDateTime(dateStr: string) {
   })
 }
 
-/** タスクコードの接頭辞からタスク種別を判定 */
-function getTaskType(taskCode: string): 'data_entry' | 'file_upload' | 'review' | 'document' {
+function getTaskType(
+  taskCode: string,
+): 'data_entry' | 'file_upload' | 'review' | 'document' {
   if (taskCode.startsWith('DAT-')) return 'data_entry'
   if (taskCode.startsWith('COL-')) return 'file_upload'
   if (taskCode.startsWith('REV-')) return 'review'
-  return 'document' // DOC系
+  return 'document'
 }
 
 // =============================================
@@ -86,6 +116,7 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // 編集用の状態
   const [editStatus, setEditStatus] = useState('')
@@ -95,25 +126,28 @@ export default function TaskDetailPage() {
   // データ取得
   // =============================================
 
-  /** taskCode から実際の taskId を取得するため、プロジェクト詳細から探す */
   const fetchTask = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      // まずプロジェクト詳細からタスク一覧を取得して taskCode → taskId を解決
       const projectRes = await fetch(`/api/projects/${projectId}`)
       const projectJson = await projectRes.json()
-      if (!projectRes.ok) throw new Error(projectJson.error?.message || '取得に失敗しました')
+      if (!projectRes.ok) {
+        throw new Error(projectJson.error?.message || '取得に失敗しました')
+      }
 
       const matchedTask = projectJson.data.tasks.find(
         (t: { taskCode: string }) => t.taskCode === taskCode,
       )
       if (!matchedTask) throw new Error(`タスク ${taskCode} が見つかりません`)
 
-      // taskId でタスク詳細（ステータス履歴付き）を取得
-      const taskRes = await fetch(`/api/projects/${projectId}/tasks/${matchedTask.id}`)
+      const taskRes = await fetch(
+        `/api/projects/${projectId}/tasks/${matchedTask.id}`,
+      )
       const taskJson = await taskRes.json()
-      if (!taskRes.ok) throw new Error(taskJson.error?.message || 'タスク取得に失敗しました')
+      if (!taskRes.ok) {
+        throw new Error(taskJson.error?.message || 'タスク取得に失敗しました')
+      }
 
       setTask(taskJson.data)
       setEditStatus(taskJson.data.status)
@@ -130,19 +164,19 @@ export default function TaskDetailPage() {
   }, [fetchTask])
 
   // =============================================
-  // 保存
+  // タスク保存（ステータス・メモ）
   // =============================================
 
   async function handleSave() {
     if (!task) return
     setSaving(true)
     setError('')
+    setSaveSuccess(false)
     try {
       const body: Record<string, unknown> = {}
       if (editStatus !== task.status) body.status = editStatus
       if (editNotes !== (task.notes ?? '')) body.notes = editNotes || null
 
-      // 変更がなければスキップ
       if (Object.keys(body).length === 0) {
         setSaving(false)
         return
@@ -156,7 +190,8 @@ export default function TaskDetailPage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error?.message || '保存に失敗しました')
 
-      // 最新データで再取得
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 2000)
       fetchTask()
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存に失敗しました')
@@ -170,15 +205,22 @@ export default function TaskDetailPage() {
   // =============================================
 
   if (loading) return <div className="text-muted-foreground">読み込み中...</div>
-  if (error && !task) return (
-    <div className="space-y-4">
-      <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
-      <Button variant="ghost" onClick={() => router.push(`/projects/${projectId}`)}>
-        <ArrowLeft className="h-4 w-4" />
-        タスク一覧に戻る
-      </Button>
-    </div>
-  )
+  if (error && !task) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+          {error}
+        </div>
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/projects/${projectId}`)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          タスク一覧に戻る
+        </Button>
+      </div>
+    )
+  }
   if (!task) return null
 
   const taskType = getTaskType(task.taskCode)
@@ -187,23 +229,33 @@ export default function TaskDetailPage() {
     <div className="space-y-6 max-w-2xl">
       {/* ヘッダー */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/projects/${projectId}`)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/projects/${projectId}`)}
+        >
           <ArrowLeft className="h-4 w-4" />
           タスク一覧に戻る
         </Button>
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="font-mono text-sm text-muted-foreground">{task.taskCode}</span>
+        <span className="font-mono text-sm text-muted-foreground">
+          {task.taskCode}
+        </span>
         <h1 className="text-2xl font-bold">{task.taskName}</h1>
       </div>
 
       {task.template.description && (
-        <p className="text-sm text-muted-foreground">{task.template.description}</p>
+        <p className="text-sm text-muted-foreground">
+          {task.template.description}
+        </p>
       )}
 
       {error && (
-        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+          {error}
+        </div>
       )}
 
       {/* ステータス選択 */}
@@ -220,7 +272,9 @@ export default function TaskDetailPage() {
             {projectTaskStatus.options
               .filter((opt) => opt.value !== 'NOT_REQUIRED')
               .map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
           </Select>
         </CardContent>
@@ -228,20 +282,20 @@ export default function TaskDetailPage() {
 
       {/* タスク種別に応じたコンテンツ */}
       {taskType === 'file_upload' && (
-        <FileUploadSection task={task} />
+        <FileUploadSection
+          task={task}
+          projectId={projectId}
+          onUploaded={fetchTask}
+        />
       )}
 
       {taskType === 'data_entry' && (
-        <DataEntrySection task={task} />
+        <DataEntrySection projectId={projectId} />
       )}
 
-      {taskType === 'document' && (
-        <DocumentSection task={task} />
-      )}
+      {taskType === 'document' && <DocumentSection task={task} />}
 
-      {taskType === 'review' && (
-        <ReviewSection projectId={projectId} />
-      )}
+      {taskType === 'review' && <ReviewSection projectId={projectId} />}
 
       {/* メモ */}
       <Card>
@@ -265,18 +319,32 @@ export default function TaskDetailPage() {
         </CardHeader>
         <CardContent>
           {task.statusLogs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">まだ変更がありません</p>
+            <p className="text-sm text-muted-foreground">
+              まだ変更がありません
+            </p>
           ) : (
             <div className="space-y-2">
               {task.statusLogs.map((log) => (
                 <div key={log.id} className="flex items-center gap-3 text-sm">
-                  <span className="text-muted-foreground">{formatDateTime(log.changedAt)}</span>
-                  <Badge variant={taskStatusVariant(log.fromStatus)} className="text-xs">
-                    {projectTaskStatus.labelMap[log.fromStatus as keyof typeof projectTaskStatus.labelMap]}
+                  <span className="text-muted-foreground">
+                    {formatDateTime(log.changedAt)}
+                  </span>
+                  <Badge
+                    variant={taskStatusVariant(log.fromStatus)}
+                    className="text-xs"
+                  >
+                    {projectTaskStatus.labelMap[
+                      log.fromStatus as keyof typeof projectTaskStatus.labelMap
+                    ]}
                   </Badge>
                   <span className="text-muted-foreground">&rarr;</span>
-                  <Badge variant={taskStatusVariant(log.toStatus)} className="text-xs">
-                    {projectTaskStatus.labelMap[log.toStatus as keyof typeof projectTaskStatus.labelMap]}
+                  <Badge
+                    variant={taskStatusVariant(log.toStatus)}
+                    className="text-xs"
+                  >
+                    {projectTaskStatus.labelMap[
+                      log.toStatus as keyof typeof projectTaskStatus.labelMap
+                    ]}
                   </Badge>
                 </div>
               ))}
@@ -286,7 +354,12 @@ export default function TaskDetailPage() {
       </Card>
 
       {/* 保存ボタン */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {saveSuccess && (
+          <span className="text-sm text-green-600 flex items-center gap-1">
+            <Check className="h-4 w-4" /> 保存しました
+          </span>
+        )}
         <Button onClick={handleSave} disabled={saving}>
           {saving ? '保存中...' : '保存'}
         </Button>
@@ -296,58 +369,454 @@ export default function TaskDetailPage() {
 }
 
 // =============================================
-// タスク種別ごとのセクション
+// ファイルアップロードセクション（COL系）
 // =============================================
 
-/** ファイルアップロードセクション（COL系） */
-function FileUploadSection({ task }: { task: TaskDetail }) {
+function FileUploadSection({
+  task,
+  projectId,
+  onUploaded,
+}: {
+  task: TaskDetail
+  projectId: string
+  onUploaded: () => void
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  /** ファイルを選択してタスクに紐づける */
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadError('')
+    try {
+      // ファイルパスとして「{タスクコード}/{ファイル名}」を保存する
+      // 実際のファイルストレージ（Box等）への保存は将来実装
+      const filePath = `${task.taskCode}/${file.name}`
+
+      const res = await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        throw new Error(json.error?.message || 'アップロードに失敗しました')
+      }
+
+      onUploaded()
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : 'アップロードに失敗しました',
+      )
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  /** ファイルを削除する */
+  async function handleRemoveFile() {
+    setUploadError('')
+    try {
+      const res = await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: null }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error?.message || '削除に失敗しました')
+      onUploaded()
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : '削除に失敗しました',
+      )
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">ファイル</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {uploadError && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {uploadError}
+          </div>
+        )}
+
         {task.filePath ? (
-          <div className="rounded-md border p-3">
-            <p className="text-sm font-medium">{task.filePath}</p>
-            <p className="text-xs text-muted-foreground mt-1">アップロード済み</p>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{task.filePath}</p>
+                <p className="text-xs text-muted-foreground">
+                  アップロード済み
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleRemoveFile}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">まだファイルがアップロードされていません</p>
+          <p className="text-sm text-muted-foreground">
+            まだファイルがアップロードされていません
+          </p>
         )}
-        <Button variant="outline" size="sm" disabled>
-          <Upload className="h-4 w-4" />
-          ファイルをアップロード
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          ファイルアップロード機能は準備中です。一括アップロードをご利用ください。
-        </p>
+
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {uploading ? 'アップロード中...' : 'ファイルをアップロード'}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx"
+            onChange={handleFileSelect}
+          />
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-/** データ入力セクション（DAT系） */
-function DataEntrySection({ task }: { task: TaskDetail }) {
+// =============================================
+// データ入力セクション（DAT系：企業情報フォーム）
+// =============================================
+
+/** 分野の選択肢 */
+const SSW_FIELD_OPTIONS = [
+  { value: 'NURSING_CARE', label: '介護' },
+  { value: 'ACCOMMODATION', label: '宿泊' },
+  { value: 'FOOD_SERVICE', label: '外食業' },
+  { value: 'FOOD_MANUFACTURING', label: '飲食料品製造業' },
+  { value: 'AUTO_TRANSPORT', label: '自動車運送業' },
+]
+
+function DataEntrySection({ projectId }: { projectId: string }) {
+  const [form, setForm] = useState<CompanyFormData>(EMPTY_COMPANY)
+  const [companyId, setCompanyId] = useState<string | null>(null)
+  const [loadingCompany, setLoadingCompany] = useState(true)
+  const [savingCompany, setSavingCompany] = useState(false)
+  const [companyError, setCompanyError] = useState('')
+  const [companySaved, setCompanySaved] = useState(false)
+
+  // プロジェクトの contextData から companyId を取得し、企業情報を読み込む
+  useEffect(() => {
+    async function loadCompany() {
+      setLoadingCompany(true)
+      try {
+        const res = await fetch(`/api/projects/${projectId}`)
+        const json = await res.json()
+        if (!res.ok) return
+
+        const ctx = json.data.contextData as Record<string, unknown> | null
+        const existingCompanyId = ctx?.companyId as string | undefined
+
+        if (existingCompanyId) {
+          // 既存の企業情報を読み込む
+          setCompanyId(existingCompanyId)
+          const compRes = await fetch(
+            `/api/ssw/companies/${existingCompanyId}`,
+          )
+          const compJson = await compRes.json()
+          if (compRes.ok) {
+            const c = compJson.data
+            setForm({
+              name: c.name ?? '',
+              representative: c.representative ?? '',
+              postalCode: c.postalCode ?? '',
+              address: c.address ?? '',
+              phone: c.phone ?? '',
+              field: c.field ?? '',
+              businessLicense: c.businessLicense ?? '',
+              corporateNumber: c.corporateNumber ?? '',
+              establishedDate: c.establishedDate
+                ? c.establishedDate.split('T')[0]
+                : '',
+              notes: c.notes ?? '',
+            })
+          }
+        }
+
+        // contextData に sswField があればフォームに初期値セット
+        if (!existingCompanyId && ctx?.sswField) {
+          setForm((prev) => ({ ...prev, field: ctx.sswField as string }))
+        }
+      } catch {
+        // 読み込みエラーは無視（フォームは空のまま）
+      } finally {
+        setLoadingCompany(false)
+      }
+    }
+    loadCompany()
+  }, [projectId])
+
+  function updateField(key: keyof CompanyFormData, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  /** 企業情報を保存する */
+  async function handleSaveCompany() {
+    setSavingCompany(true)
+    setCompanyError('')
+    setCompanySaved(false)
+
+    // 必須フィールドのバリデーション
+    if (!form.name || !form.representative || !form.address || !form.phone) {
+      setCompanyError('企業名・代表者名・所在地・電話番号は必須です')
+      setSavingCompany(false)
+      return
+    }
+    if (!form.field) {
+      setCompanyError('分野を選択してください')
+      setSavingCompany(false)
+      return
+    }
+
+    try {
+      const payload = {
+        name: form.name,
+        representative: form.representative,
+        postalCode: form.postalCode || undefined,
+        address: form.address,
+        phone: form.phone,
+        field: form.field,
+        businessLicense: form.businessLicense || undefined,
+        corporateNumber: form.corporateNumber || undefined,
+        establishedDate: form.establishedDate || undefined,
+        notes: form.notes || undefined,
+      }
+
+      let savedCompanyId = companyId
+
+      if (companyId) {
+        // 既存の企業を更新
+        const res = await fetch(`/api/ssw/companies/${companyId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          throw new Error(json.error?.message || '企業情報の更新に失敗しました')
+        }
+      } else {
+        // 新規企業を作成
+        const res = await fetch('/api/ssw/companies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          throw new Error(json.error?.message || '企業情報の保存に失敗しました')
+        }
+        savedCompanyId = json.data.id
+        setCompanyId(savedCompanyId)
+      }
+
+      // プロジェクトの contextData に companyId を保存する
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contextData: { companyId: savedCompanyId },
+        }),
+      })
+
+      setCompanySaved(true)
+      setTimeout(() => setCompanySaved(false), 3000)
+    } catch (err) {
+      setCompanyError(
+        err instanceof Error ? err.message : '保存に失敗しました',
+      )
+    } finally {
+      setSavingCompany(false)
+    }
+  }
+
+  if (loadingCompany) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <p className="text-sm text-muted-foreground">
+            企業情報を読み込み中...
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">企業情報入力</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           受入れ企業の基本情報を入力してください。
-          保存するとDOC系タスクの申請書に自動反映されます。
+          保存すると DOC 系タスクの申請書に自動反映されます。
         </p>
-        <p className="text-xs text-muted-foreground">
-          企業情報フォームは準備中です。
-        </p>
+
+        {companyError && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {companyError}
+          </div>
+        )}
+
+        {/* フォーム本体 */}
+        <div className="grid gap-4">
+          <div className="space-y-1">
+            <Label>
+              企業名 <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={form.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              placeholder="株式会社サンプル"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>
+              代表者名 <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={form.representative}
+              onChange={(e) => updateField('representative', e.target.value)}
+              placeholder="山田太郎"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>郵便番号</Label>
+              <Input
+                value={form.postalCode}
+                onChange={(e) => updateField('postalCode', e.target.value)}
+                placeholder="123-4567"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>
+                電話番号 <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                value={form.phone}
+                onChange={(e) => updateField('phone', e.target.value)}
+                placeholder="03-1234-5678"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label>
+              所在地 <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={form.address}
+              onChange={(e) => updateField('address', e.target.value)}
+              placeholder="東京都千代田区..."
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>
+              分野 <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={form.field}
+              onChange={(e) => updateField('field', e.target.value)}
+            >
+              <option value="">選択してください</option>
+              {SSW_FIELD_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>法人番号</Label>
+              <Input
+                value={form.corporateNumber}
+                onChange={(e) =>
+                  updateField('corporateNumber', e.target.value)
+                }
+                placeholder="1234567890123"
+                maxLength={13}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>設立年月日</Label>
+              <Input
+                type="date"
+                value={form.establishedDate}
+                onChange={(e) =>
+                  updateField('establishedDate', e.target.value)
+                }
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label>営業許可</Label>
+            <Input
+              value={form.businessLicense}
+              onChange={(e) =>
+                updateField('businessLicense', e.target.value)
+              }
+              placeholder="旅館業許可 第123号"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>備考</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => updateField('notes', e.target.value)}
+              placeholder="備考があれば入力..."
+              rows={2}
+            />
+          </div>
+        </div>
+
+        {/* 保存ボタン */}
+        <div className="flex items-center justify-end gap-2">
+          {companySaved && (
+            <span className="text-sm text-green-600 flex items-center gap-1">
+              <Check className="h-4 w-4" /> 企業情報を保存しました
+            </span>
+          )}
+          <Button onClick={handleSaveCompany} disabled={savingCompany}>
+            {savingCompany ? '保存中...' : '企業情報を保存'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-/** 書類作成セクション（DOC系） */
+// =============================================
+// 書類作成セクション（DOC系）
+// =============================================
+
 function DocumentSection({ task }: { task: TaskDetail }) {
   return (
     <Card>
@@ -356,13 +825,16 @@ function DocumentSection({ task }: { task: TaskDetail }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {task.filePath ? (
-          <div className="rounded-md border p-3">
-            <p className="text-sm font-medium">{task.filePath}</p>
-            <p className="text-xs text-muted-foreground mt-1">生成済み</p>
+          <div className="flex items-center gap-2 rounded-md border p-3">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{task.filePath}</p>
+              <p className="text-xs text-muted-foreground">生成済み</p>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            企業情報の入力完了後に自動生成されます。
+            企業情報（DAT-001）の入力完了後に自動生成されます。
           </p>
         )}
       </CardContent>
@@ -370,7 +842,10 @@ function DocumentSection({ task }: { task: TaskDetail }) {
   )
 }
 
-/** 最終確認セクション（REV系） */
+// =============================================
+// 最終確認セクション（REV系）
+// =============================================
+
 function ReviewSection({ projectId }: { projectId: string }) {
   const [summary, setSummary] = useState<{
     internal: { completed: number; total: number }
@@ -392,45 +867,40 @@ function ReviewSection({ projectId }: { projectId: string }) {
           status: string
         }>
 
-        // タスクをグループ分けして進捗を集計
-        const count = (codes: string[]) => {
-          const filtered = codes
-            .map((c) => tasks.find((t) => t.taskCode === c))
-            .filter((t): t is NonNullable<typeof t> => !!t && t.status !== 'NOT_REQUIRED')
+        const countByGroup = (
+          filterFn: (code: string) => boolean,
+        ) => {
+          const filtered = tasks.filter(
+            (t) => filterFn(t.taskCode) && t.status !== 'NOT_REQUIRED',
+          )
           return {
-            completed: filtered.filter((t) => t.status === 'COMPLETED').length,
+            completed: filtered.filter((t) => t.status === 'COMPLETED')
+              .length,
             total: filtered.length,
           }
         }
 
-        // 未完了タスクのリスト
         const incomplete = tasks.filter(
-          (t) => t.status !== 'COMPLETED' && t.status !== 'NOT_REQUIRED' && !t.taskCode.startsWith('REV-'),
+          (t) =>
+            t.status !== 'COMPLETED' &&
+            t.status !== 'NOT_REQUIRED' &&
+            !t.taskCode.startsWith('REV-'),
         )
 
-        // 簡易的にコード範囲でグループ分け
-        const internalCodes = tasks
-          .filter((t) => t.taskCode.startsWith('DAT-') || t.taskCode.startsWith('DOC-'))
-          .map((t) => t.taskCode)
-        const applicantCodes = tasks
-          .filter((t) => {
-            if (!t.taskCode.startsWith('COL-')) return false
-            const n = parseInt(t.taskCode.replace('COL-', ''), 10)
-            return (n >= 1 && n <= 11) || (n >= 19 && n <= 20)
-          })
-          .map((t) => t.taskCode)
-        const companyCodes = tasks
-          .filter((t) => {
-            if (!t.taskCode.startsWith('COL-')) return false
-            const n = parseInt(t.taskCode.replace('COL-', ''), 10)
-            return (n >= 12 && n <= 18) || (n >= 21 && n <= 23)
-          })
-          .map((t) => t.taskCode)
-
         setSummary({
-          internal: count(internalCodes),
-          applicant: count(applicantCodes),
-          company: count(companyCodes),
+          internal: countByGroup(
+            (c) => c.startsWith('DAT-') || c.startsWith('DOC-'),
+          ),
+          applicant: countByGroup((c) => {
+            if (!c.startsWith('COL-')) return false
+            const n = parseInt(c.replace('COL-', ''), 10)
+            return (n >= 1 && n <= 11) || (n >= 19 && n <= 20)
+          }),
+          company: countByGroup((c) => {
+            if (!c.startsWith('COL-')) return false
+            const n = parseInt(c.replace('COL-', ''), 10)
+            return (n >= 12 && n <= 18) || (n >= 21 && n <= 23)
+          }),
           incomplete,
         })
       } catch {
@@ -439,6 +909,9 @@ function ReviewSection({ projectId }: { projectId: string }) {
     }
     fetchSummary()
   }, [projectId])
+
+  const allComplete =
+    summary !== null && summary.incomplete.length === 0
 
   return (
     <Card>
@@ -472,25 +945,29 @@ function ReviewSection({ projectId }: { projectId: string }) {
               <div className="space-y-1">
                 <p className="text-sm font-medium">未完了タスク:</p>
                 {summary.incomplete.map((t) => (
-                  <p key={t.taskCode} className="text-sm text-muted-foreground">
-                    ・{t.taskCode} {t.taskName} — {
-                      projectTaskStatus.labelMap[t.status as keyof typeof projectTaskStatus.labelMap]
+                  <p
+                    key={t.taskCode}
+                    className="text-sm text-muted-foreground"
+                  >
+                    ・{t.taskCode} {t.taskName} —{' '}
+                    {
+                      projectTaskStatus.labelMap[
+                        t.status as keyof typeof projectTaskStatus.labelMap
+                      ]
                     }
                   </p>
                 ))}
               </div>
             )}
 
-            {summary.incomplete.length === 0 && (
+            {allComplete && (
               <div className="space-y-3">
                 <p className="text-sm text-green-600 font-medium">
                   全タスク完了。申請書類セットを生成できます。
                 </p>
-                <Button disabled>
-                  申請書類セットを生成
-                </Button>
+                <Button disabled>申請書類セットを生成</Button>
                 <p className="text-xs text-muted-foreground">
-                  書類生成機能は準備中です。
+                  PDF 生成機能は将来実装予定です。
                 </p>
               </div>
             )}
@@ -501,7 +978,10 @@ function ReviewSection({ projectId }: { projectId: string }) {
   )
 }
 
-/** 進捗表示行 */
+// =============================================
+// 共通コンポーネント
+// =============================================
+
 function ProgressLine({
   label,
   completed,
