@@ -14,6 +14,7 @@ title: プロジェクト機能 — エンティティ定義
 | 4 | Project | スキルのインスタンス（具体的な案件の進行管理） |
 | 5 | ProjectTask | プロジェクト内の個々のタスク |
 | 6 | ProjectMember | プロジェクトの参加者と権限 |
+| 7 | ProjectTaskStatusLog | タスクのステータス変更履歴 |
 
 ## ER図
 
@@ -24,6 +25,7 @@ erDiagram
     Skill ||--o{ Project : "インスタンス"
     Project ||--o{ ProjectTask : "含む"
     Project ||--o{ ProjectMember : "参加"
+    ProjectTask ||--o{ ProjectTaskStatusLog : "履歴"
     SkillTaskTemplate ||--o{ ProjectTask : "生成元"
     Staff ||--o{ Skill : "作成する"
     User ||--o{ Project : "開始する"
@@ -113,6 +115,15 @@ erDiagram
         ProjectRole role
         datetime createdAt
     }
+
+    ProjectTaskStatusLog {
+        string id PK
+        string taskId FK
+        ProjectTaskStatus fromStatus
+        ProjectTaskStatus toStatus
+        string changedById FK
+        datetime changedAt
+    }
 ```
 
 ## Enum定義
@@ -143,8 +154,8 @@ erDiagram
 | `EQUALS` | 一致 | 分野 = 介護 |
 | `NOT_EQUALS` | 不一致 | |
 | `IN` | いずれかに一致 | 国籍 IN [カンボジア, タイ, ベトナム] |
-| `IS_TRUE` | true | 技能実習2号修了 = true |
-| `IS_FALSE` | false | 技能実習2号修了 = false |
+| `IS_TRUE` | true | 将来のスキルで使用 |
+| `IS_FALSE` | false | 将来のスキルで使用 |
 
 ### ProjectStatus — プロジェクトステータス
 
@@ -230,17 +241,37 @@ erDiagram
 | createdAt | DateTime | YES | 作成日時 |
 | updatedAt | DateTime | YES | 最終更新日時 |
 
+#### 初期スキル（特定技能申請）のタスクテンプレート
+
+| コード | タスク名 | カテゴリ | アクション | 必須 | 備考 |
+|--------|---------|----------|-----------|:---:|------|
+| DAT-001 | 受入れ企業の基本情報入力 | DATA_ENTRY | FORM_INPUT | YES | 企業名・代表者・住所等。完了後 DOC 系に自動反映 |
+| DOC-001〜013 | （申請書類 13件） | DOCUMENT_CREATION | AUTO_GENERATE 等 | YES | 既存定義のまま |
+| COL-001〜023 | （証憑収集 23件） | DOCUMENT_COLLECTION | FILE_UPLOAD | ※ | 条件分岐で変動 |
+| REV-001 | 全書類の最終確認 | REVIEW | MANUAL_CHECK | YES | 既存定義のまま |
+
+※ COL 系の必須/不要は下記の条件分岐ルールで判定
+
 #### 初期スキル（特定技能申請）の条件分岐ルール
+
+プロジェクト作成時に「学生選択」と「職種選択」の2つだけ入力する。国籍は学生DBから自動取得。
 
 | 対象タスク | 条件フィールド | 演算子 | 条件値 | 結果 |
 |-----------|--------------|--------|--------|------|
-| COL-003, COL-004 | hasCompletedTitp2 | IS_TRUE | — | 不要（免除） |
 | COL-020 | sswField | EQUALS | NURSING_CARE | 必須 |
 | COL-021 | sswField | EQUALS | ACCOMMODATION | 必須 |
 | COL-022, COL-023 | sswField | EQUALS | AUTO_TRANSPORT | 必須 |
 | COL-019 | nationality | IN | KHM,THA,VNM | 必須 |
-| COL-008, COL-009 | insuranceType | EQUALS | NATIONAL_HEALTH | 必須 |
-| COL-010, COL-011 | pensionType | EQUALS | NATIONAL_PENSION | 必須 |
+
+#### 廃止した条件分岐（全タスク必須に変更）
+
+以下は条件分岐せず、常に必須タスクとして扱う。
+
+| 旧条件 | 対象タスク | 変更理由 |
+|--------|-----------|---------|
+| 技能実習2号修了 → 試験免除 | COL-003, COL-004 | 全員に試験証明書を求める |
+| 国民健康保険 → 保険料証明必須 | COL-008, COL-009 | 保険種別を問わず、プロジェクト内タスクとしてファイルアップロードで対応 |
+| 国民年金 → 年金保険料証明必須 | COL-010, COL-011 | 年金種別を問わず、プロジェクト内タスクとしてファイルアップロードで対応 |
 
 ### Project — プロジェクト
 
@@ -263,14 +294,23 @@ erDiagram
 
 #### contextData の例（特定技能申請）
 
+プロジェクト作成時のウィザード入力と、学生DBからの自動取得データが保存される。companyId はプロジェクト内の DAT-001 タスク完了時に追加される。
+
 ```json
 {
   "studentId": "student-uuid",
-  "companyId": "company-uuid",
+  "nationality": "VNM",
   "sswField": "NURSING_CARE",
-  "sswCaseId": "case-uuid"
+  "companyId": "company-uuid"
 }
 ```
+
+| フィールド | 取得元 | タイミング | 説明 |
+|-----------|--------|-----------|------|
+| studentId | ウィザードで学生を選択 | プロジェクト作成時 | 対象学生のID |
+| nationality | 学生DBから自動取得 | プロジェクト作成時 | 国籍（条件分岐で使用） |
+| sswField | ウィザードで職種を選択 | プロジェクト作成時 | 分野（条件分岐で使用） |
+| companyId | DAT-001 タスクで入力 | プロジェクト進行中 | 受入れ企業のID（Company テーブル） |
 
 ### ProjectTask — プロジェクトタスク
 
@@ -307,6 +347,19 @@ erDiagram
 | role | ProjectRole | YES | プロジェクト内の権限 |
 | createdAt | DateTime | YES | 追加日時 |
 
+### ProjectTaskStatusLog — ステータス変更履歴
+
+タスクのステータスが変更されるたびに記録される。誰が・いつ・何に変更したかを追跡する。
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|:---:|------|
+| id | String | YES | 一意識別子 |
+| taskId | String (FK → ProjectTask) | YES | 対象タスク |
+| fromStatus | ProjectTaskStatus | YES | 変更前のステータス |
+| toStatus | ProjectTaskStatus | YES | 変更後のステータス |
+| changedById | String (FK → User) | YES | 変更した人 |
+| changedAt | DateTime | YES | 変更日時 |
+
 ## 既存エンティティとの関係
 
 ### 特定技能エンティティとの連携
@@ -315,7 +368,8 @@ erDiagram
 
 | プロジェクト | 特定技能 | 関係 |
 |-------------|---------|------|
-| Project.contextData.sswCaseId | SswCase.id | プロジェクトが案件に紐づく |
+| Project.contextData.studentId | Student.id | プロジェクトが学生に紐づく |
+| Project.contextData.companyId | Company.id | プロジェクトが受入れ企業に紐づく（DAT-001 完了時） |
 | ProjectTask.taskCode | CaseDocument.documentCode | タスクと書類ステータスが対応 |
 | ProjectTask.status | CaseDocument.status | タスク完了 → 書類ステータスも更新 |
 
