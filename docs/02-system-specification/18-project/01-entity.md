@@ -25,7 +25,8 @@ erDiagram
     Project ||--o{ ProjectTask : "含む"
     Project ||--o{ ProjectMember : "参加"
     SkillTaskTemplate ||--o{ ProjectTask : "生成元"
-    User ||--o{ Project : "作成する"
+    Staff ||--o{ Skill : "作成する"
+    User ||--o{ Project : "開始する"
     User ||--o{ ProjectMember : "参加する"
 
     Skill {
@@ -37,6 +38,8 @@ erDiagram
         json workflowDefinition
         int version
         boolean isActive
+        string createdById FK
+        string updatedById FK
         datetime createdAt
         datetime updatedAt
     }
@@ -51,6 +54,10 @@ erDiagram
         TaskActionType actionType
         boolean defaultRequired
         int sortOrder
+        string createdById FK
+        string updatedById FK
+        datetime createdAt
+        datetime updatedAt
     }
 
     SkillConditionRule {
@@ -61,6 +68,8 @@ erDiagram
         ConditionOperator operator
         string conditionValue
         boolean resultRequired
+        datetime createdAt
+        datetime updatedAt
     }
 
     Project {
@@ -72,6 +81,8 @@ erDiagram
         json contextData
         datetime startedAt
         datetime completedAt
+        string createdById FK
+        string updatedById FK
         datetime createdAt
         datetime updatedAt
     }
@@ -89,6 +100,8 @@ erDiagram
         string notes
         string assigneeId
         datetime completedAt
+        string createdById FK
+        string updatedById FK
         datetime createdAt
         datetime updatedAt
     }
@@ -176,6 +189,8 @@ erDiagram
 | workflowDefinition | Json | YES | ワークフローの定義（ステップ・順序・条件） |
 | version | Int | YES | バージョン番号 |
 | isActive | Boolean | YES | 有効/無効 |
+| createdById | String (FK → Staff) | NO | 作成者 |
+| updatedById | String (FK → Staff) | NO | 更新者 |
 | createdAt | DateTime | YES | 作成日時 |
 | updatedAt | DateTime | YES | 最終更新日時 |
 
@@ -194,6 +209,10 @@ erDiagram
 | actionType | TaskActionType | YES | アクション種別 |
 | defaultRequired | Boolean | YES | デフォルトで必須かどうか |
 | sortOrder | Int | YES | 表示順序 |
+| createdById | String (FK → Staff) | NO | 作成者 |
+| updatedById | String (FK → Staff) | NO | 更新者 |
+| createdAt | DateTime | YES | 作成日時 |
+| updatedAt | DateTime | YES | 最終更新日時 |
 
 ### SkillConditionRule — 条件分岐ルール
 
@@ -208,6 +227,8 @@ erDiagram
 | operator | ConditionOperator | YES | 演算子 |
 | conditionValue | String | YES | 条件値（例: NURSING_CARE, true） |
 | resultRequired | Boolean | YES | 条件に一致した場合の必須/不要 |
+| createdAt | DateTime | YES | 作成日時 |
+| updatedAt | DateTime | YES | 最終更新日時 |
 
 #### 初期スキル（特定技能申請）の条件分岐ルール
 
@@ -235,6 +256,8 @@ erDiagram
 | contextData | Json | YES | プロジェクト固有のデータ（対象学生ID、企業ID等） |
 | startedAt | DateTime | YES | 開始日時 |
 | completedAt | DateTime | NO | 完了日時 |
+| createdById | String (FK → Staff) | NO | 作成者 |
+| updatedById | String (FK → Staff) | NO | 更新者 |
 | createdAt | DateTime | YES | 作成日時 |
 | updatedAt | DateTime | YES | 最終更新日時 |
 
@@ -267,6 +290,8 @@ erDiagram
 | notes | String | NO | メモ・注記事項 |
 | assigneeId | String (FK → User) | NO | 担当者 |
 | completedAt | DateTime | NO | 完了日時 |
+| createdById | String (FK → Staff) | NO | 作成者 |
+| updatedById | String (FK → Staff) | NO | 更新者 |
 | createdAt | DateTime | YES | 作成日時 |
 | updatedAt | DateTime | YES | 最終更新日時 |
 

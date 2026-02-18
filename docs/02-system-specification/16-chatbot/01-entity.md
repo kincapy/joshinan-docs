@@ -181,16 +181,16 @@ erDiagram
 
 ## 既存エンティティとの関係
 
-### User テーブルへの変更
+### Staff テーブルへの変更
 
-既存の Supabase Auth ユーザーに `role` フィールドを追加する。
+既存の Staff エンティティに `userRole` フィールドを追加する。
 
 ```
-User（既存）
-├ id          — Supabase Auth の UID
-├ email       — メールアドレス
+Staff（既存）
+├ id          — UUID
+├ name        — 氏名
 ├ ...         — 既存フィールド
-└ role        — UserRole（新規追加）← デフォルト: GENERAL
+└ userRole    — UserRole（新規追加）← デフォルト: GENERAL
 ```
 
 ### 他のテーブルへの影響
