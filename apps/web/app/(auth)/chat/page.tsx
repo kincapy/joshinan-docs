@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import {
   Plus, Send, Loader2, Trash2, Pencil, Check, X, MessageSquare,
 } from 'lucide-react'
+import { MarkdownRenderer } from '@/components/chat/markdown-renderer'
 
 // =============================================
 // 型定義
@@ -74,6 +75,9 @@ export default function ChatPage() {
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
 
+  // ストリーミング中の ASSISTANT 応答テキスト
+  const [streamingText, setStreamingText] = useState('')
+
   // タイトル編集
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
@@ -125,11 +129,11 @@ export default function ChatPage() {
   }
 
   // -----------------------------------------
-  // メッセージ送信後に最下部へスクロール
+  // メッセージ追加 or ストリーミング更新時に最下部へスクロール
   // -----------------------------------------
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [activeSession?.messages])
+  }, [activeSession?.messages, streamingText])
 
   // -----------------------------------------
   // 新規セッション作成
@@ -154,7 +158,7 @@ export default function ChatPage() {
   }
 
   // -----------------------------------------
-  // メッセージ送信
+  // メッセージ送信（SSE ストリーミング対応）
   // -----------------------------------------
   async function handleSendMessage() {
     if (!activeSessionId || !inputText.trim() || sending) return
@@ -162,6 +166,19 @@ export default function ChatPage() {
     const content = inputText.trim()
     setInputText('')
     setSending(true)
+    setStreamingText('')
+
+    // 楽観的に USER メッセージを画面に追加（即時表示）
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sessionId: activeSessionId,
+      role: 'USER',
+      content,
+      createdAt: new Date().toISOString(),
+    }
+    setActiveSession((prev) =>
+      prev ? { ...prev, messages: [...prev.messages, tempUserMessage] } : prev,
+    )
 
     try {
       const res = await fetch(`/api/chat/sessions/${activeSessionId}/messages`, {
@@ -169,20 +186,76 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: 'USER', content }),
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error?.message || 'メッセージ送信に失敗しました')
 
-      // 送信成功後にメッセージ一覧を再取得して最新状態を反映
-      await fetchSessionDetail(activeSessionId)
-      // サイドバーの updatedAt を更新するために一覧も再取得
-      await fetchSessions()
+      // SSE でない場合（USER 以外の role や認証エラー等）は従来通り JSON 処理
+      const contentType = res.headers.get('content-type') ?? ''
+      if (!contentType.includes('text/event-stream')) {
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error?.message || 'メッセージ送信に失敗しました')
+        await fetchSessionDetail(activeSessionId)
+        await fetchSessions()
+        return
+      }
+
+      // SSE ストリーミングを読み取る
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('レスポンスの読み取りに失敗しました')
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        // SSE イベントをパース（\n\n で区切られた各イベント）
+        const events = buffer.split('\n\n')
+        // 最後の要素は未完了の可能性があるのでバッファに残す
+        buffer = events.pop() ?? ''
+
+        for (const eventStr of events) {
+          if (!eventStr.trim()) continue
+
+          const lines = eventStr.split('\n')
+          let eventType = ''
+          let eventData = ''
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7)
+            } else if (line.startsWith('data: ')) {
+              eventData = line.slice(6)
+            }
+          }
+
+          if (!eventType || !eventData) continue
+
+          const parsed = JSON.parse(eventData)
+
+          if (eventType === 'delta') {
+            // テキスト差分を蓄積して表示
+            setStreamingText((prev) => prev + parsed.text)
+          } else if (eventType === 'done') {
+            // 完了 → DB の最新状態を取得して画面を同期
+            setStreamingText('')
+            await fetchSessionDetail(activeSessionId)
+            await fetchSessions()
+          } else if (eventType === 'error') {
+            throw new Error(parsed.message || '応答生成に失敗しました')
+          }
+        }
+      }
     } catch (err) {
       console.error('メッセージ送信に失敗:', err)
       alert('メッセージの送信に失敗しました')
-      // 送信失敗時は入力内容を復元する
+      // 送信失敗時は入力内容を復元し、楽観的に追加したメッセージを除去
       setInputText(content)
+      await fetchSessionDetail(activeSessionId)
     } finally {
       setSending(false)
+      setStreamingText('')
     }
   }
 
@@ -385,13 +458,24 @@ export default function ChatPage() {
                   {activeSession?.messages.map((msg) => (
                     <MessageBubble key={msg.id} message={msg} />
                   ))}
-                  {/* 送信中のローディング表示 */}
-                  {sending && (
+                  {/* ストリーミング中の ASSISTANT 応答表示 */}
+                  {sending && streamingText && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[70%]">
+                        <div className="bg-muted rounded-lg p-3">
+                          <MarkdownRenderer content={streamingText} />
+                          <span className="inline-block w-1.5 h-4 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* ストリーミング開始前のローディング表示 */}
+                  {sending && !streamingText && (
                     <div className="flex justify-start">
                       <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span className="text-sm text-muted-foreground">
-                          応答を待っています...
+                          応答を生成中...
                         </span>
                       </div>
                     </div>
@@ -485,12 +569,12 @@ function MessageBubble({ message }: { message: Message }) {
     )
   }
 
-  // ASSISTANT メッセージ: 左寄せ
+  // ASSISTANT メッセージ: 左寄せ（Markdown レンダリング対応）
   return (
     <div className="flex justify-start">
       <div className="max-w-[70%]">
         <div className="bg-muted rounded-lg p-3">
-          <p className="whitespace-pre-wrap text-sm">{content}</p>
+          <MarkdownRenderer content={content} />
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           {formatDate(createdAt)}
