@@ -54,7 +54,15 @@ export async function GET(
   }
 }
 
-/** POST /api/chat/sessions/:id/messages — メッセージ送信 + Claude 応答生成 */
+/**
+ * POST /api/chat/sessions/:id/messages — メッセージ送信 + Claude 応答生成
+ *
+ * USER メッセージの場合は SSE ストリーミングで Claude の応答をリアルタイムに返す。
+ * イベント種別:
+ *   - delta: テキストの差分（逐次表示用）
+ *   - done:  完了通知（保存済みメッセージ ID を含む）
+ *   - error: エラー通知
+ */
 export async function POST(
   request: NextRequest,
   { params }: RouteParams,
@@ -83,8 +91,7 @@ export async function POST(
       },
     })
 
-    // USER メッセージの場合のみ Claude API を呼び出す
-    // （ASSISTANT / SYSTEM メッセージの直接保存はスキップ）
+    // USER メッセージ以外は DB 保存のみで完了
     if (body.role !== 'USER') {
       await prisma.chatSession.update({
         where: { id: sessionId },
@@ -107,52 +114,85 @@ export async function POST(
         content: m.content,
       }))
 
-    // Claude API 呼び出し（Tool Use ループ対応）
-    const assistantContent = await callClaudeWithToolLoop(claudeMessages)
+    // SSE ストリーミングで Claude の応答をリアルタイムに返す
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder()
 
-    // ASSISTANT メッセージを DB に保存
-    const assistantMessage = await prisma.chatMessage.create({
-      data: {
-        sessionId,
-        role: 'ASSISTANT',
-        content: assistantContent,
+        /** SSE イベントを送信するヘルパー */
+        function sendEvent(event: string, data: unknown) {
+          const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
+          controller.enqueue(encoder.encode(payload))
+        }
+
+        try {
+          const fullText = await streamClaudeResponse(
+            claudeMessages,
+            (textDelta) => sendEvent('delta', { text: textDelta }),
+          )
+
+          // 完成したテキストを DB に保存
+          const assistantMessage = await prisma.chatMessage.create({
+            data: {
+              sessionId,
+              role: 'ASSISTANT',
+              content: fullText,
+            },
+          })
+
+          await prisma.chatSession.update({
+            where: { id: sessionId },
+            data: { updatedAt: new Date() },
+          })
+
+          sendEvent('done', { messageId: assistantMessage.id })
+        } catch (err) {
+          const message = err instanceof Error ? err.message : '応答生成に失敗しました'
+          sendEvent('error', { message })
+        } finally {
+          controller.close()
+        }
       },
     })
 
-    // セッションの updatedAt を更新
-    await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { updatedAt: new Date() },
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
     })
-
-    return ok(assistantMessage)
   } catch (error) {
     return handleApiError(error)
   }
 }
 
 // =============================================
-// Claude API 呼び出し（Tool Use ループ対応）
+// Claude API ストリーミング呼び出し（Tool Use ループ対応）
 // =============================================
 
 /** Tool Use の最大ループ回数（無限ループ防止） */
 const MAX_TOOL_LOOPS = 5
 
 /**
- * Claude API を呼び出し、Tool Use が返された場合はツールを実行して
- * 最終的なテキスト応答を返す
+ * Claude API をストリーミングで呼び出す
+ *
+ * Tool Use が返された場合は内部でツールを実行し、
+ * 最終応答のテキスト差分のみを onDelta コールバックで通知する
+ *
+ * @returns 完成したテキスト全文（DB 保存用）
  */
-async function callClaudeWithToolLoop(
+async function streamClaudeResponse(
   messages: Anthropic.MessageParam[],
+  onDelta: (text: string) => void,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt()
   const tools = getToolDefinitions()
-
-  // メッセージ履歴をコピー（ループ中に tool_result を追加するため）
   const conversationMessages = [...messages]
 
   for (let loop = 0; loop < MAX_TOOL_LOOPS; loop++) {
-    const response = await anthropic.messages.create({
+    // ストリーミングで Claude API を呼び出す
+    const stream = anthropic.messages.stream({
       model: CLAUDE_MODEL,
       max_tokens: MAX_TOKENS,
       system: systemPrompt,
@@ -160,22 +200,36 @@ async function callClaudeWithToolLoop(
       messages: conversationMessages,
     })
 
-    // end_turn（通常の応答完了）の場合はテキスト部分を返す
-    if (response.stop_reason === 'end_turn') {
-      return extractTextFromContent(response.content)
+    // ストリーミングイベントを処理
+    let fullText = ''
+    const contentBlocks: Anthropic.ContentBlock[] = []
+    let stopReason: string | null = null
+
+    // テキスト差分を逐次通知
+    stream.on('text', (text) => {
+      fullText += text
+      onDelta(text)
+    })
+
+    // 完了を待つ
+    const finalMessage = await stream.finalMessage()
+    stopReason = finalMessage.stop_reason
+    contentBlocks.push(...finalMessage.content)
+
+    // end_turn（通常の応答完了）→ テキスト全文を返す
+    if (stopReason === 'end_turn') {
+      return fullText || extractTextFromContent(contentBlocks)
     }
 
-    // tool_use の場合はツールを実行して結果を返す
-    if (response.stop_reason === 'tool_use') {
-      // Claude の応答（tool_use ブロック含む）を会話履歴に追加
+    // tool_use → ツールを実行してループ継続（この間はストリーミングしない）
+    if (stopReason === 'tool_use') {
       conversationMessages.push({
         role: 'assistant',
-        content: response.content,
+        content: contentBlocks,
       })
 
-      // 各 tool_use ブロックを実行
       const toolResults: Anthropic.ToolResultBlockParam[] = []
-      for (const block of response.content) {
+      for (const block of contentBlocks) {
         if (block.type === 'tool_use') {
           const result = await executeToolCall(
             block.name,
@@ -189,7 +243,6 @@ async function callClaudeWithToolLoop(
         }
       }
 
-      // ツール実行結果を会話履歴に追加してループを継続
       conversationMessages.push({
         role: 'user',
         content: toolResults,
@@ -198,11 +251,10 @@ async function callClaudeWithToolLoop(
       continue
     }
 
-    // その他の stop_reason（max_tokens 等）はテキスト部分を返す
-    return extractTextFromContent(response.content)
+    // その他の stop_reason（max_tokens 等）
+    return fullText || extractTextFromContent(contentBlocks)
   }
 
-  // ループ上限に達した場合
   return 'ツール実行の回数が上限に達しました。質問を変えてお試しください。'
 }
 
