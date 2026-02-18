@@ -293,7 +293,13 @@ export default function TaskDetailPage() {
         <DataEntrySection projectId={projectId} />
       )}
 
-      {taskType === 'document' && <DocumentSection task={task} />}
+      {taskType === 'document' && (
+        <DocumentSection
+          task={task}
+          projectId={projectId}
+          onUploaded={fetchTask}
+        />
+      )}
 
       {taskType === 'review' && <ReviewSection projectId={projectId} />}
 
@@ -405,6 +411,15 @@ function FileUploadSection({
       const json = await res.json()
       if (!res.ok) {
         throw new Error(json.error?.message || 'アップロードに失敗しました')
+      }
+
+      // NOT_STARTED の場合は IN_PROGRESS に自動遷移
+      if (task.status === 'NOT_STARTED') {
+        await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'IN_PROGRESS' }),
+        })
       }
 
       onUploaded()
@@ -817,26 +832,203 @@ function DataEntrySection({ projectId }: { projectId: string }) {
 // 書類作成セクション（DOC系）
 // =============================================
 
-function DocumentSection({ task }: { task: TaskDetail }) {
+/**
+ * テンプレートDL + アップロードが必要な DOC コード
+ * DOC-001 は自動生成なので含まない
+ */
+const TEMPLATE_DOC_CODES = [
+  'DOC-003', 'DOC-004', 'DOC-005', 'DOC-006', 'DOC-007', 'DOC-008', 'DOC-009',
+]
+
+function DocumentSection({
+  task,
+  projectId,
+  onUploaded,
+}: {
+  task: TaskDetail
+  projectId: string
+  onUploaded: () => void
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  const isTemplateBased = TEMPLATE_DOC_CODES.includes(task.taskCode)
+
+  /** テンプレートをダウンロードする */
+  async function handleDownloadTemplate() {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/templates/${task.taskCode}`)
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error?.message || 'ダウンロードに失敗しました')
+      }
+
+      const blob = await res.blob()
+      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
+      const match = contentDisposition.match(/filename="(.+)"/)
+      const fileName = match ? decodeURIComponent(match[1]) : `${task.taskCode}_template`
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'ダウンロードに失敗しました')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  /** ファイルを選択してタスクに紐づける（アップロード時にステータスも自動更新） */
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadError('')
+    try {
+      const filePath = `${task.taskCode}/${file.name}`
+
+      // ファイルパスを保存
+      const res = await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error?.message || 'アップロードに失敗しました')
+
+      // NOT_STARTED の場合は IN_PROGRESS に自動遷移
+      if (task.status === 'NOT_STARTED') {
+        await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'IN_PROGRESS' }),
+        })
+      }
+
+      onUploaded()
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'アップロードに失敗しました')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  /** ファイルを削除する */
+  async function handleRemoveFile() {
+    setUploadError('')
+    try {
+      const res = await fetch(`/api/projects/${projectId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: null }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error?.message || '削除に失敗しました')
+      onUploaded()
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : '削除に失敗しました')
+    }
+  }
+
+  // DOC-001: 自動生成書類の場合
+  if (!isTemplateBased) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">書類</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {task.filePath ? (
+            <div className="flex items-center gap-2 rounded-md border p-3">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{task.filePath}</p>
+                <p className="text-xs text-muted-foreground">生成済み</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              この書類は REV-001（最終確認）で一括生成されます。
+              企業情報（DAT-001）の入力を完了してください。
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // DOC-003〜009: テンプレートDL + アップロード
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">書類</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {uploadError && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {uploadError}
+          </div>
+        )}
+
+        {/* アップロード済みファイルの表示 */}
         {task.filePath ? (
-          <div className="flex items-center gap-2 rounded-md border p-3">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">{task.filePath}</p>
-              <p className="text-xs text-muted-foreground">生成済み</p>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{task.filePath}</p>
+                <p className="text-xs text-muted-foreground">アップロード済み</p>
+              </div>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleRemoveFile}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            企業情報（DAT-001）の入力完了後に自動生成されます。
+            書式をダウンロードして記入後、アップロードしてください。
           </p>
         )}
+
+        {/* テンプレートDL + アップロードボタン */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={downloading}
+            onClick={handleDownloadTemplate}
+          >
+            <Download className="h-4 w-4" />
+            {downloading ? 'ダウンロード中...' : '書式ダウンロード'}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {uploading ? 'アップロード中...' : 'ファイルをアップロード'}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx"
+            onChange={handleFileSelect}
+          />
+        </div>
       </CardContent>
     </Card>
   )

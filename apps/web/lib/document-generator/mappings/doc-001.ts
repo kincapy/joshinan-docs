@@ -313,6 +313,112 @@ const sheet6Mappings: ExcelCellMapping[] = [
 ]
 
 // ============================================================
+// シート4: 申請人用（変更）３V — 署名日
+// ============================================================
+
+const SHEET4_NAME = '申請人用（変更）３V '
+
+/**
+ * シート4のマッピング: 申請書作成年月日
+ *
+ * 設問22〜27（有・無チェック）と職歴は Phase 2 で対応。
+ * ここでは申請書作成日のみ自動入力する。
+ */
+const sheet4Mappings: ExcelCellMapping[] = [
+  // 申請書作成年月日（年・月・日が別セル）
+  {
+    sheetName: SHEET4_NAME,
+    cell: 'W59',
+    getValue: () => getDateParts(new Date()).warekiYear,
+  },
+  {
+    sheetName: SHEET4_NAME,
+    cell: 'AA59',
+    getValue: () => getDateParts(new Date()).month,
+  },
+  {
+    sheetName: SHEET4_NAME,
+    cell: 'AF59',
+    getValue: () => getDateParts(new Date()).day,
+  },
+]
+
+// ============================================================
+// シート8: 所属機関用（変更）V4 — 登録支援機関情報
+// ============================================================
+
+const SHEET8_NAME = '所属機関用（変更）V4 '
+
+/**
+ * シート8のマッピング: 登録支援機関（常南交通）の情報
+ *
+ * 設問39〜42、支援計画(1)〜(16) の有・無チェックは Phase 2 で対応。
+ * ここでは登録支援機関の固定情報のみ自動入力する。
+ */
+const sheet8Mappings: ExcelCellMapping[] = [
+  // (1) 氏名又は名称
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'C85',
+    getValue: (ctx) => ctx.supportOrg.name,
+  },
+  // (2) 法人番号
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'U85',
+    getValue: (ctx) => ctx.supportOrg.corporateNumber,
+  },
+  // (4) 住所（所在地）
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'C90',
+    getValue: (ctx) => ctx.supportOrg.address,
+  },
+  // 電話番号
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'AA90',
+    getValue: (ctx) => ctx.supportOrg.phone,
+  },
+  // (5) 代表者の氏名
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'C92',
+    getValue: (ctx) => ctx.supportOrg.representative,
+  },
+  // (6) 登録番号
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'F93',
+    getValue: (ctx) => ctx.supportOrg.registrationNumber,
+  },
+  // (8) 支援を行う事業所の名称（本社と同一）
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'C96',
+    getValue: (ctx) => ctx.supportOrg.name,
+  },
+  // (9) 所在地（本社と同一）
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'X96',
+    getValue: (ctx) => ctx.supportOrg.address,
+  },
+  // (10) 支援責任者名
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'C98',
+    getValue: (ctx) => ctx.supportOrg.supportManager,
+  },
+  // (11) 支援担当者名（支援責任者と同一人物）
+  {
+    sheetName: SHEET8_NAME,
+    cell: 'U98',
+    getValue: (ctx) => ctx.supportOrg.supportManager,
+  },
+]
+
+// ============================================================
 // DOC-001 書類定義
 // ============================================================
 
@@ -320,8 +426,10 @@ const sheet6Mappings: ExcelCellMapping[] = [
 const allMappings: ExcelCellMapping[] = [
   ...sheet1Mappings,
   ...sheet3Mappings,
+  ...sheet4Mappings,
   ...sheet5Mappings,
   ...sheet6Mappings,
+  ...sheet8Mappings,
 ]
 
 /**
