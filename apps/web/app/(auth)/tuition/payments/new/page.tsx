@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,7 +24,16 @@ type StudentOption = {
   nameEn: string
 }
 
+/** Next.js 15 では useSearchParams() を Suspense で囲む必要がある */
 export default function NewPaymentPage() {
+  return (
+    <Suspense fallback={<div className="p-6">読み込み中...</div>}>
+      <NewPaymentContent />
+    </Suspense>
+  )
+}
+
+function NewPaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedStudentId = searchParams.get('studentId')
