@@ -50,6 +50,44 @@ export const GENDER_LABELS: Record<string, string> = {
 }
 
 /**
+ * DOCコード → テンプレートファイル名のマッピング
+ *
+ * テンプレートDL API で使用する。
+ * DOC-001 は自動生成なので含まない（REV-001 から一括DL）。
+ * DOC-003〜009 はテンプレートをダウンロードして手動記入→アップロードの運用。
+ */
+export const DOC_TEMPLATE_FILES: Record<string, { fileName: string; label: string }> = {
+  'DOC-003': {
+    fileName: 'DOC-003_第1-5号_特定技能雇用契約書.docx',
+    label: '特定技能雇用契約書',
+  },
+  'DOC-004': {
+    fileName: 'DOC-004_第1-6号_雇用条件書.docx',
+    label: '雇用条件書',
+  },
+  'DOC-005': {
+    fileName: 'DOC-005_第1-17号_支援計画書.xlsx',
+    label: '支援計画書',
+  },
+  'DOC-006': {
+    fileName: 'DOC-006_第1-11-1号_所属機関概要書.docx',
+    label: '所属機関概要書',
+  },
+  'DOC-007': {
+    fileName: 'DOC-007_第1-4号_報酬説明書.doc',
+    label: '報酬説明書',
+  },
+  'DOC-008': {
+    fileName: 'DOC-008_第1-16号_雇用経緯説明書.docx',
+    label: '雇用経緯説明書',
+  },
+  'DOC-009': {
+    fileName: 'DOC-009_第1-25号_委託契約説明書.doc',
+    label: '委託契約説明書',
+  },
+}
+
+/**
  * 国籍コードから日本語名への変換
  *
  * 学生マスタの nationality フィールドは英語名で保存されているため、

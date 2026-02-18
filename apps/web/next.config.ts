@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     "/api/projects/\\[id\\]/generate-documents": [
       "./templates/ssw-application/**/*",
     ],
+    "/api/templates/\\[docCode\\]": [
+      "./templates/ssw-application/**/*",
+    ],
   },
 };
 
