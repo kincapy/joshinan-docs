@@ -80,6 +80,23 @@ model Company {
   establishedDate DateTime? @db.Date
   /// 備考
   notes           String?
+
+  // --- アンケートで収集する追加情報 ---
+  /// 事業内容
+  businessDescription String?
+  /// 資本金（円）
+  capitalAmount       BigInt?
+  /// 常勤職員数
+  fullTimeEmployees   Int?
+  /// 担当者名（業務連絡用）
+  contactPerson       String?
+  /// 担当者メールアドレス
+  contactEmail        String?
+  /// FAX番号
+  faxNumber           String?
+  /// アンケート回答日（最終アップロード日時）
+  surveyRespondedAt   DateTime?
+
   /// 作成者スタッフID
   createdById     String?   @db.Uuid
   /// 更新者スタッフID
@@ -88,13 +105,17 @@ model Company {
   updatedAt       DateTime  @updatedAt
 
   /// 作成者
-  createdBy   Staff?       @relation("CompanyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   Staff?             @relation("CompanyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   /// 更新者
-  updatedBy   Staff?       @relation("CompanyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  updatedBy   Staff?             @relation("CompanyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   /// この企業の案件 (1:N)
   sswCases    SswCase[]
   /// この企業への請求 (1:N)
   sswInvoices SswInvoice[]
+  /// 役員情報 (1:N)
+  officers    CompanyOfficer[]
+  /// 決算情報 (1:N)
+  financials  CompanyFinancial[]
 
   @@index([createdById])
   @@index([updatedById])
@@ -277,4 +298,50 @@ model SswInvoice {
   @@index([createdById])
   @@index([updatedById])
   @@map("ssw_invoices")
+}
+
+/// 企業の役員情報（アンケートから収集）
+model CompanyOfficer {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 企業ID
+  companyId String   @db.Uuid
+  /// 氏名
+  name      String
+  /// ふりがな
+  nameKana  String
+  /// 役職
+  position  String
+  /// 表示順（Excelの行順で設定）
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// 所属企業
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("company_officers")
+}
+
+/// 企業の決算情報（アンケートから収集、直近3年分）
+model CompanyFinancial {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 企業ID
+  companyId      String   @db.Uuid
+  /// 決算年度（西暦）
+  fiscalYear     Int
+  /// 売上高（円）
+  revenue        BigInt?
+  /// 経常利益（円）
+  ordinaryIncome BigInt?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  /// 所属企業
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// 同一企業の同一年度は一意
+  @@unique([companyId, fiscalYear])
+  @@index([companyId])
+  @@map("company_financials")
 }

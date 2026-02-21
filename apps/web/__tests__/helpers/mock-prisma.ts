@@ -130,6 +130,16 @@ export function createMockPrisma() {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    // 企業アンケート関連
+    companyOfficer: {
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    companyFinancial: {
+      findMany: vi.fn(),
+      upsert: vi.fn(),
+    },
     $transaction: vi.fn(),
   }
 }
