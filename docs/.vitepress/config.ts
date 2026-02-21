@@ -161,6 +161,16 @@ export default defineConfig({
                 { text: '課題', link: '/01-domain-knowledge/15-specified-skilled-worker/03-issues' },
               ],
             },
+            {
+              text: '16 経理・会計',
+              collapsed: false,
+              items: [
+                { text: '概要', link: '/01-domain-knowledge/16-accounting/' },
+                { text: '業務フロー', link: '/01-domain-knowledge/16-accounting/01-work-flow' },
+                { text: 'データ', link: '/01-domain-knowledge/16-accounting/02-data' },
+                { text: '課題', link: '/01-domain-knowledge/16-accounting/03-issues' },
+              ],
+            },
           ],
         },
       ],
