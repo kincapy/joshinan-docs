@@ -55,6 +55,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         sswInvoices: {
           orderBy: { issueDate: 'desc' },
         },
+        officers: { orderBy: { sortOrder: 'asc' } },
+        financials: { orderBy: { fiscalYear: 'desc' } },
       },
     })
 

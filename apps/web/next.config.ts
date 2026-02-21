@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
     // worktree 環境でルートを正しく解決するための設定
     root: path.resolve(__dirname, "../.."),
   },
-  // Prisma のネイティブモジュールをサーバーサイド外部パッケージとして扱う
-  serverExternalPackages: ["@prisma/client"],
+  // サーバーサイドでのみ使うネイティブモジュールを外部パッケージとして扱う
+  serverExternalPackages: ["@prisma/client", "exceljs"],
   // Vercel デプロイ時にテンプレートファイルをバンドルに含める
   // （申請書類の Excel テンプレートをサーバーサイドで読み込むため必要）
   outputFileTracingIncludes: {

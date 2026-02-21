@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Download, Pencil, Upload } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
   NURSING_CARE: '介護',
@@ -67,6 +67,13 @@ type CompanyDetail = {
   corporateNumber: string | null
   establishedDate: string | null
   notes: string | null
+  businessDescription: string | null
+  capitalAmount: string | null
+  fullTimeEmployees: number | null
+  contactPerson: string | null
+  contactEmail: string | null
+  faxNumber: string | null
+  surveyRespondedAt: string | null
   sswCases: {
     id: string
     field: string
@@ -82,6 +89,19 @@ type CompanyDetail = {
     issueDate: string
     dueDate: string
     status: string
+  }[]
+  officers: {
+    id: string
+    name: string
+    nameKana: string
+    position: string
+    sortOrder: number
+  }[]
+  financials: {
+    id: string
+    fiscalYear: number
+    revenue: string | null
+    ordinaryIncome: string | null
   }[]
 }
 
@@ -107,6 +127,13 @@ export default function CompanyDetailPage() {
   })
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
+
+  // アンケート関連の state
+  const [downloading, setDownloading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadMessage, setUploadMessage] = useState('')
+  const [uploadError, setUploadError] = useState('')
 
   const fetchCompany = useCallback(async () => {
     setLoading(true)
@@ -176,6 +203,56 @@ export default function CompanyDetailPage() {
     }
   }
 
+  /** アンケートExcelをダウンロード */
+  async function handleDownloadSurvey() {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/ssw/companies/${companyId}/survey/download`)
+      if (!res.ok) throw new Error('ダウンロードに失敗しました')
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${company?.name || '企業'}_アンケート.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setUploadError('ダウンロードに失敗しました')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  /** 記入済みアンケートExcelをアップロード */
+  async function handleUploadSurvey() {
+    if (!uploadFile) return
+    setUploading(true)
+    setUploadMessage('')
+    setUploadError('')
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadFile)
+
+      const res = await fetch(`/api/ssw/companies/${companyId}/survey/upload`, {
+        method: 'POST',
+        body: formData,
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setUploadError(json.error?.message || 'アップロードに失敗しました')
+        return
+      }
+      setUploadMessage('アンケートデータを反映しました')
+      setUploadFile(null)
+      fetchCompany()
+    } catch {
+      setUploadError('アップロードに失敗しました')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (loading) {
     return <p className="py-8 text-center text-muted-foreground">読み込み中...</p>
   }
@@ -206,6 +283,7 @@ export default function CompanyDetailPage() {
           <TabsTrigger value="basic">基本情報</TabsTrigger>
           <TabsTrigger value="cases">案件一覧</TabsTrigger>
           <TabsTrigger value="invoices">請求履歴</TabsTrigger>
+          <TabsTrigger value="survey">アンケート</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -339,6 +417,162 @@ export default function CompanyDetailPage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="survey">
+          <Card>
+            <CardHeader>
+              <CardTitle>アンケートフォーム</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* ダウンロード */}
+              <div>
+                <Button onClick={handleDownloadSurvey} disabled={downloading}>
+                  <Download className="mr-1 h-4 w-4" />
+                  {downloading ? 'ダウンロード中...' : 'アンケートフォームをダウンロード'}
+                </Button>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Excelファイルをダウンロードして企業に記入を依頼してください
+                </p>
+              </div>
+
+              {/* アップロード */}
+              <div className="rounded border p-4">
+                <h4 className="mb-2 text-sm font-medium">記入済みファイルのアップロード</h4>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept=".xlsx"
+                    onChange={(e) => {
+                      setUploadFile(e.target.files?.[0] || null)
+                      setUploadMessage('')
+                      setUploadError('')
+                    }}
+                    className="text-sm"
+                  />
+                  <Button
+                    onClick={handleUploadSurvey}
+                    disabled={!uploadFile || uploading}
+                    size="sm"
+                  >
+                    <Upload className="mr-1 h-4 w-4" />
+                    {uploading ? 'アップロード中...' : 'アップロード'}
+                  </Button>
+                </div>
+                {uploadMessage && (
+                  <p className="mt-2 text-sm text-green-600">{uploadMessage}</p>
+                )}
+                {uploadError && (
+                  <p className="mt-2 text-sm text-destructive">{uploadError}</p>
+                )}
+              </div>
+
+              {/* 収集済みデータ表示 */}
+              {company.surveyRespondedAt && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    最終回答日: {new Date(company.surveyRespondedAt).toLocaleDateString('ja-JP')}
+                  </p>
+
+                  {/* 企業追加情報 */}
+                  <div>
+                    <h4 className="mb-2 text-sm font-medium">企業情報</h4>
+                    <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm md:grid-cols-3">
+                      <div>
+                        <dt className="text-muted-foreground">事業内容</dt>
+                        <dd className="font-medium">{company.businessDescription || '-'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">資本金</dt>
+                        <dd className="font-medium">
+                          {company.capitalAmount
+                            ? `${Number(company.capitalAmount).toLocaleString()}円`
+                            : '-'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">常勤職員数</dt>
+                        <dd className="font-medium">
+                          {company.fullTimeEmployees != null
+                            ? `${company.fullTimeEmployees}名`
+                            : '-'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">担当者</dt>
+                        <dd className="font-medium">{company.contactPerson || '-'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">担当者メール</dt>
+                        <dd className="font-medium">{company.contactEmail || '-'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">FAX</dt>
+                        <dd className="font-medium">{company.faxNumber || '-'}</dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  {/* 役員情報 */}
+                  {company.officers.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">役員情報</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>氏名</TableHead>
+                            <TableHead>ふりがな</TableHead>
+                            <TableHead>役職</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {company.officers.map((o) => (
+                            <TableRow key={o.id}>
+                              <TableCell className="font-medium">{o.name}</TableCell>
+                              <TableCell>{o.nameKana}</TableCell>
+                              <TableCell>{o.position}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {/* 決算情報 */}
+                  {company.financials.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">決算情報</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>年度</TableHead>
+                            <TableHead className="text-right">売上高</TableHead>
+                            <TableHead className="text-right">経常利益</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {company.financials.map((f) => (
+                            <TableRow key={f.id}>
+                              <TableCell className="font-medium">{f.fiscalYear}年度</TableCell>
+                              <TableCell className="text-right">
+                                {f.revenue != null
+                                  ? `${Number(f.revenue).toLocaleString()}円`
+                                  : '-'}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {f.ordinaryIncome != null
+                                  ? `${Number(f.ordinaryIncome).toLocaleString()}円`
+                                  : '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
