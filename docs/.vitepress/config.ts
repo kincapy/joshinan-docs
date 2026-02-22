@@ -175,6 +175,7 @@ export default defineConfig({
               items: [
                 { text: 'システムコンセプト', link: '/02-system-specification/00-concept/' },
                 { text: 'プロジェクト機能', link: '/02-system-specification/00-concept/02-project-feature' },
+                { text: 'システム構成', link: '/02-system-specification/00-concept/03-system-architecture' },
               ],
             },
             {
