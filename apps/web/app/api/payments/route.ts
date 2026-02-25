@@ -80,7 +80,15 @@ export async function POST(request: NextRequest) {
     })
 
     // 入金消込: 未決済の請求を古い順に消し込む
-    await reconcileInvoices(body.studentId, body.amount)
+    const lastSettledInvoiceId = await reconcileInvoices(body.studentId, body.amount)
+
+    // 消込が発生した場合、入金レコードに最後の消込対象請求IDを紐づける
+    if (lastSettledInvoiceId) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { invoiceId: lastSettledInvoiceId },
+      })
+    }
 
     // 対象月の MonthlyBalance を再計算
     const paymentMonth = body.paymentDate.substring(0, 7) // YYYY-MM
@@ -101,7 +109,7 @@ export async function POST(request: NextRequest) {
 async function reconcileInvoices(
   studentId: string,
   paymentAmount: number,
-) {
+): Promise<string | null> {
   // 未決済の請求を billingMonth 昇順で取得
   const openInvoices = await prisma.invoice.findMany({
     where: { studentId, status: 'ISSUED' },
@@ -109,6 +117,7 @@ async function reconcileInvoices(
   })
 
   let remaining = paymentAmount
+  let lastSettledInvoiceId: string | null = null
 
   for (const invoice of openInvoices) {
     if (remaining <= 0) break
@@ -121,12 +130,15 @@ async function reconcileInvoices(
         where: { id: invoice.id },
         data: { status: 'SETTLED' },
       })
+      lastSettledInvoiceId = invoice.id
       remaining -= invoiceAmount
     } else {
       // 部分的な入金の場合はステータスを変更しない（余剰は次回に持ち越し）
       break
     }
   }
+
+  return lastSettledInvoiceId
 }
 
 /**
