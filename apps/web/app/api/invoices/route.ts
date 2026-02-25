@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       })),
     )
 
-    await prisma.invoice.createMany({ data: invoiceData })
+    await prisma.invoice.createMany({ data: invoiceData, skipDuplicates: true })
 
     // 各学生の MonthlyBalance を再計算
     for (const student of students) {

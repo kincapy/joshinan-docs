@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // MonthlyBalance のフィルタ条件
     const balanceWhere: Record<string, unknown> = { month }
-    if (balanceStatus === 'receivable') {
+    if (balanceStatus === 'unpaid') {
       balanceWhere.balance = { gt: 0 }
     } else if (balanceStatus === 'overpaid') {
       balanceWhere.balance = { lt: 0 }
