@@ -4,6 +4,14 @@ export default defineConfig({
   title: '常南国際学院 Docs',
   description: '常南国際学院の業務ナレッジとシステム設計ドキュメント',
   lang: 'ja',
+
+  // Performance: Suppress chunk size warnings for search index (expected to be large for 114 pages)
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
+  },
+
   themeConfig: {
     nav: [
       { text: 'ホーム', link: '/' },
@@ -19,7 +27,7 @@ export default defineConfig({
             { text: '概要', link: '/01-domain-knowledge/' },
             {
               text: '00 日本語教育機関',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/00-japanese-language-education/' },
                 { text: 'データ', link: '/01-domain-knowledge/00-japanese-language-education/02-data' },
@@ -28,7 +36,7 @@ export default defineConfig({
             },
             {
               text: '01 学校基本情報',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要・ビジネスモデル', link: '/01-domain-knowledge/01-school-info/' },
                 { text: 'データ', link: '/01-domain-knowledge/01-school-info/02-data' },
@@ -36,7 +44,7 @@ export default defineConfig({
             },
             {
               text: '02 学生管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/02-student-management/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/02-student-management/01-work-flow' },
@@ -63,7 +71,7 @@ export default defineConfig({
             },
             {
               text: '05 出席管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/05-attendance/' },
                 { text: 'データ', link: '/01-domain-knowledge/05-attendance/02-data' },
@@ -71,7 +79,7 @@ export default defineConfig({
             },
             {
               text: '06 学費管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/06-tuition/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/06-tuition/01-work-flow' },
@@ -80,7 +88,7 @@ export default defineConfig({
             },
             {
               text: '07 エージェント管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/07-agent-management/' },
                 { text: 'データ', link: '/01-domain-knowledge/07-agent-management/02-data' },
@@ -96,7 +104,7 @@ export default defineConfig({
             },
             {
               text: '09 教職員管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/09-staff-management/' },
                 { text: 'データ', link: '/01-domain-knowledge/09-staff-management/02-data' },
@@ -104,7 +112,7 @@ export default defineConfig({
             },
             {
               text: '10 外部システム連携',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/10-external-integration/' },
                 { text: 'RINGUAL — 概要', link: '/01-domain-knowledge/10-external-integration/01-ringual' },
@@ -114,7 +122,7 @@ export default defineConfig({
             },
             {
               text: '11 入管報告・届出',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/11-immigration-report/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/11-immigration-report/01-work-flow' },
@@ -142,7 +150,7 @@ export default defineConfig({
             },
             {
               text: '14 募集業務',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/14-recruitment/' },
                 { text: '申請書作成の注意事項', link: '/01-domain-knowledge/14-recruitment/01-application-form' },
@@ -153,7 +161,7 @@ export default defineConfig({
             },
             {
               text: '15 特定技能・職業紹介',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/01-domain-knowledge/15-specified-skilled-worker/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/15-specified-skilled-worker/01-work-flow' },
@@ -171,7 +179,7 @@ export default defineConfig({
             { text: '概要', link: '/02-system-specification/' },
             {
               text: '00 コンセプト',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: 'システムコンセプト', link: '/02-system-specification/00-concept/' },
                 { text: 'プロジェクト機能', link: '/02-system-specification/00-concept/02-project-feature' },
@@ -179,7 +187,7 @@ export default defineConfig({
             },
             {
               text: '00 共通',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '設計原則', link: '/02-system-specification/00-common/' },
               ],
@@ -193,7 +201,7 @@ export default defineConfig({
             },
             {
               text: '01 学校基本情報',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/01-school-info/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/01-school-info/01-entity' },
@@ -202,7 +210,7 @@ export default defineConfig({
             },
             {
               text: '02 学生管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/02-student-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/02-student-management/01-entity' },
@@ -211,7 +219,7 @@ export default defineConfig({
             },
             {
               text: '03 カリキュラム・時間割',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/03-curriculum/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/03-curriculum/01-entity' },
@@ -220,7 +228,7 @@ export default defineConfig({
             },
             {
               text: '04 クラス編成',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/04-class-assignment/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/04-class-assignment/01-entity' },
@@ -229,7 +237,7 @@ export default defineConfig({
             },
             {
               text: '05 出席管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/05-attendance/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/05-attendance/01-entity' },
@@ -238,7 +246,7 @@ export default defineConfig({
             },
             {
               text: '06 学費管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/06-tuition/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/06-tuition/01-entity' },
@@ -247,7 +255,7 @@ export default defineConfig({
             },
             {
               text: '07 エージェント管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/07-agent-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/07-agent-management/01-entity' },
@@ -256,7 +264,7 @@ export default defineConfig({
             },
             {
               text: '08 施設・備品管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/08-facility-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/08-facility-management/01-entity' },
@@ -265,7 +273,7 @@ export default defineConfig({
             },
             {
               text: '09 教職員管理',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/09-staff-management/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/09-staff-management/01-entity' },
@@ -274,7 +282,7 @@ export default defineConfig({
             },
             {
               text: '11 入管報告・届出',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/11-immigration-report/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/11-immigration-report/01-entity' },
@@ -292,7 +300,7 @@ export default defineConfig({
             },
             {
               text: '14 募集業務',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/14-recruitment/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/14-recruitment/01-entity' },
@@ -301,7 +309,7 @@ export default defineConfig({
             },
             {
               text: '15 特定技能・職業紹介',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/15-specified-skilled-worker/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/15-specified-skilled-worker/01-entity' },
@@ -310,7 +318,7 @@ export default defineConfig({
             },
             {
               text: '16 チャットボット',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/16-chatbot/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/16-chatbot/01-entity' },
@@ -319,7 +327,7 @@ export default defineConfig({
             },
             {
               text: '17 帳票出力',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/17-documents/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/17-documents/01-entity' },
@@ -328,7 +336,7 @@ export default defineConfig({
             },
             {
               text: '18 プロジェクト',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '概要', link: '/02-system-specification/18-project/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/18-project/01-entity' },
@@ -349,7 +357,7 @@ export default defineConfig({
             { text: 'ビザ・特定技能', link: '/03-tasks/visa/' },
             {
               text: '2026/02/17',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '仕様ドキュメントレビュー・整備', link: '/03-tasks/2026/02/17/1000-仕様ドキュメントレビュー整備' },
                 { text: 'プロジェクト初期構築', link: '/03-tasks/2026/02/17/1100-プロジェクト初期構築' },
@@ -362,6 +370,16 @@ export default defineConfig({
     socialLinks: [],
     search: {
       provider: 'local',
+      options: {
+        miniSearch: {
+          searchOptions: {
+            // Limit fuzzy matching for faster search
+            fuzzy: 0.2,
+            prefix: true,
+            boost: { title: 3, text: 1 },
+          },
+        },
+      },
     },
     outline: {
       level: [2, 3],
@@ -373,11 +391,6 @@ export default defineConfig({
     docFooter: {
       prev: '前のページ',
       next: '次のページ',
-    },
-  },
-  markdown: {
-    config: (md) => {
-      // Mermaid support can be added later
     },
   },
 })
