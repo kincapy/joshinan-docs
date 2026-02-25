@@ -77,6 +77,7 @@ model Invoice {
   /// この請求への入金
   payments    Payment[]
 
+  @@unique([studentId, billingItemId, billingMonth])
   @@index([studentId])
   @@index([billingItemId])
   @@index([createdById])

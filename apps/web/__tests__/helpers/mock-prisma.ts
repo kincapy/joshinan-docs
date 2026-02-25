@@ -25,6 +25,8 @@ export function createMockPrisma() {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
     },
     documentTemplate: {
@@ -70,6 +72,29 @@ export function createMockPrisma() {
       create: vi.fn(),
       update: vi.fn(),
       count: vi.fn(),
+    },
+    // 学費管理
+    invoice: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    payment: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+    },
+    monthlyBalance: {
+      findMany: vi.fn(),
+    },
+    // 監査ログ
+    auditLog: {
+      createMany: vi.fn(),
+      findMany: vi.fn(),
     },
     // チャットボット機能
     chatSession: {
