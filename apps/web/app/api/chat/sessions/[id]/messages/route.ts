@@ -8,7 +8,7 @@ import { requireAuth } from '@/lib/api/auth'
 import { parseBody } from '@/lib/api/validation'
 import { anthropic, CLAUDE_MODEL, MAX_TOKENS } from '@/lib/chat/claude-client'
 import { buildSystemPrompt } from '@/lib/chat/system-prompt'
-import { getToolDefinitions, executeToolCall } from '@/lib/chat/tools'
+import { getToolDefinitions, executeToolCall, type ToolContext } from '@/lib/chat/tools'
 import type Anthropic from '@anthropic-ai/sdk'
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -126,9 +126,11 @@ export async function POST(
         }
 
         try {
+          const toolContext: ToolContext = { userId: user.id }
           const fullText = await streamClaudeResponse(
             claudeMessages,
             (textDelta) => sendEvent('delta', { text: textDelta }),
+            toolContext,
           )
 
           // 完成したテキストを DB に保存
@@ -185,6 +187,7 @@ const MAX_TOOL_LOOPS = 5
 async function streamClaudeResponse(
   messages: Anthropic.MessageParam[],
   onDelta: (text: string) => void,
+  toolContext?: ToolContext,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt()
   const tools = getToolDefinitions()
@@ -234,6 +237,7 @@ async function streamClaudeResponse(
           const result = await executeToolCall(
             block.name,
             block.input as Record<string, unknown>,
+            toolContext,
           )
           toolResults.push({
             type: 'tool_result',
