@@ -342,6 +342,7 @@ export default defineConfig({
                 { text: '概要', link: '/02-system-specification/17-documents/' },
                 { text: 'エンティティ定義', link: '/02-system-specification/17-documents/01-entity' },
                 { text: 'UIUX定義', link: '/02-system-specification/17-documents/02-uiux' },
+                { text: '入学許可証 自動生成', link: '/02-system-specification/17-documents/03-admission-certificate-generator' },
               ],
             },
             {
