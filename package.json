@@ -14,9 +14,11 @@
   "type": "module",
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.4",
+    "mermaid": "^11.13.0",
     "playwright": "^1.58.2",
     "typescript": "^5.7.0",
     "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17",
     "vitest": "^4.0.18"
   },
   "dependencies": {

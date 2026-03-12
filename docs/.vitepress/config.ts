@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: '常南国際学院 Docs',
   description: '常南国際学院の業務ナレッジとシステム設計ドキュメント',
   lang: 'ja',
@@ -375,9 +376,10 @@ export default defineConfig({
       next: '次のページ',
     },
   },
-  markdown: {
-    config: (md) => {
-      // Mermaid support can be added later
-    },
+  mermaid: {
+    // Mermaid options: https://mermaid.js.org/config/setup/modules/mermaidAPI.html#mermaidapi-configuration-defaults
   },
-})
+  mermaidPlugin: {
+    class: 'mermaid',
+  },
+}))
