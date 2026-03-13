@@ -76,6 +76,7 @@ export default defineConfig({
                 { text: '概要', link: '/01-domain-knowledge/06-tuition/' },
                 { text: '業務フロー', link: '/01-domain-knowledge/06-tuition/01-work-flow' },
                 { text: 'データ', link: '/01-domain-knowledge/06-tuition/02-data' },
+                { text: '会計構造・BI', link: '/01-domain-knowledge/06-tuition/03-accounting-bi' },
               ],
             },
             {
