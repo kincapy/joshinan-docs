@@ -5,6 +5,19 @@ export default withMermaid(defineConfig({
   title: '常南国際学院 Docs',
   description: '常南国際学院の業務ナレッジとシステム設計ドキュメント',
   lang: 'ja',
+  cleanUrls: true,
+  lastUpdated: true,
+  sitemap: {
+    hostname: 'https://joshinan-docs.vercel.app',
+  },
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['meta', { name: 'theme-color', content: '#5b8c5a' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: '常南国際学院 Docs' }],
+    ['meta', { property: 'og:description', content: '常南国際学院の業務ナレッジとシステム設計ドキュメント' }],
+    ['meta', { property: 'og:url', content: 'https://joshinan-docs.vercel.app' }],
+  ],
   themeConfig: {
     nav: [
       { text: 'ホーム', link: '/' },
@@ -360,7 +373,18 @@ export default withMermaid(defineConfig({
         },
       ],
     },
-    socialLinks: [],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/kincapy/joshinan-docs' },
+    ],
+    editLink: {
+      pattern: 'https://github.com/kincapy/joshinan-docs/edit/master/docs/:path',
+      text: 'GitHub で編集する',
+    },
+    returnToTopLabel: 'トップに戻る',
+    sidebarMenuLabel: 'メニュー',
+    darkModeSwitchLabel: 'テーマ',
+    lightModeSwitchTitle: 'ライトモードに切替',
+    darkModeSwitchTitle: 'ダークモードに切替',
     search: {
       provider: 'local',
     },
